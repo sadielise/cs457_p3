@@ -17,6 +17,10 @@
 #include <boost/algorithm/string.hpp>
 #include <ctime>
 #include <signal.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <cstdlib>
+#include <sys/stat.h>
 
 using namespace std;
 using namespace boost;
@@ -64,6 +68,20 @@ vector<string> readTopologyFile(string* filename){
 	return topology;
 }
 
+void parentProcess(pid_t pid, int fd){
+	int pidParent = getpid();
+	string pidVal = to_string(pidParent);
+	string temp = "parent process " + pidVal + "\n";
+	write(fd, temp.c_str(), temp.size());
+}
+
+void childProcess(pid_t pid, int fd){
+	int pidChild = getpid();
+	string pidVal = to_string(pidChild);
+	string temp = "child process " + pidVal + "\n";
+	write(fd, temp.c_str(), temp.size());
+}
+
 void sig_handler(int signal){
 	exit(0);
 }
@@ -81,6 +99,36 @@ int main(int argc, char* argv[]) {
 	
 	// read topology file
 	vector<string> topology = readTopologyFile(&filename);
+
+	// create the output file
+	int fd = open("output.txt", O_RDWR | O_CREAT);
+	chmod("output.txt", 0666);
+
+	pid_t pids[NUM_NODES];
+	cout << "hello world parent" << endl;
+	parentProcess(getpid(), fd);
+
+	for(int i = 0; i < NUM_NODES; i++){
+		pids[i] = fork();
+		if(pids[i] == 0){
+			cout << "hello world child" << endl;
+			childProcess(pids[i], fd);
+			_exit(0);
+		}
+		else if(pids[i] < 0){
+			cout << "fork failed" << endl;
+			exit(-1);
+		}
+	}
+
+	int status;
+	int tempN = NUM_NODES;
+	while(tempN > 0){
+		wait(&status);
+		tempN--;
+	}		
+
+	close(fd);
 
     return 0;
 }
