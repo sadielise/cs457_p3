@@ -21,6 +21,13 @@
 using namespace std;
 using namespace boost;
 
+void childProcess(pid_t pid, int fd){
+	int pidChild = getpid();
+	string pidVal = to_string(pidChild);
+	string temp = "child process " + pidVal + "\n";
+	write(fd, temp.c_str(), temp.size());
+}
+
 void sig_handler(int signal){
 	exit(0);
 }
