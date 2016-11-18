@@ -21,71 +21,64 @@
 using namespace std;
 using namespace boost;
 
-#define PORT_NUMBER 20001
+#define PORT_NUMBER 20003
 #define MESSAGE_SIZE 140
 #define VERSION 457
 int DEBUG = 1;
 
 struct packet{
-	short version;
-	short length;
 	char message[MESSAGE_SIZE];
 };	
 
-int run_client(int port, char* ip)
-{
-	struct sockaddr_in client_address = {}; //initialize client sockaddr structure
-	client_address.sin_family = AF_INET; //set family
-	client_address.sin_port = htons(port); //convert and set port
-	struct in_addr in_addr_temp = {}; //setup in_addr for ip number
-	inet_pton(AF_INET, ip, &in_addr_temp); //set s_addr in in_addr_temp
-	client_address.sin_addr = in_addr_temp; //add in_addr to sockaddr_in
-
-	int file_descriptor = socket(AF_INET, SOCK_STREAM, 0); //create socket
-	if(file_descriptor == -1){
-		printf("Error: Could not create server socket.\n");
-		return -1;
-	}
-
-	int connect_result = connect(file_descriptor, (struct sockaddr*)&client_address, sizeof(client_address)); //connect to server
-	if(connect_result == -1){
-		close(file_descriptor);			
-		printf("\nError: Could not connect to server.\n");
-		return -1;
-	}
-
-	printf("Connected!\n"); 
-
-	char send_buffer[MESSAGE_SIZE]; //buffer to send message
-	memset(send_buffer, 0, sizeof(send_buffer)); //set the buffer to zeros
-	string temp = "hello from client";
-	for(unsigned int i = 0; i < temp.size(); i++){ //copy string into char array
-		send_buffer[i] = temp.at(i);
-	}
-	struct packet send_packet = {}; //create packet to send
-	send_packet.version = htons(VERSION); //set version
-	send_packet.length = htons(temp.length()); //set length
-	bcopy(send_buffer, send_packet.message, sizeof(send_packet.message)); //set message
-	const char* send_array = reinterpret_cast<const char*>(&send_packet);
-	int send_result = send(file_descriptor, send_array, sizeof(send_packet), 0); //send message
-	if(send_result == -1){
-		printf("Error: Could not send to server.\n");
-		return -1;
-	}
-	temp.clear(); //clear the temp string
-
-	struct packet receive_packet = {}; //buffer to receive message
-	char* receive_array = reinterpret_cast<char*>(&receive_packet); //cast the packet to a char* so that it can be used by recv
-	int receive_result = recv(file_descriptor, receive_array, sizeof(receive_packet), 0); //receive message
-	receive_packet.version = ntohs(receive_packet.version); //change version back to host byte order
-	receive_packet.length = ntohs(receive_packet.length); //change length back to host by order
+void receive_manager_packet(int accept_socket){
+	struct packet receive_packet = {};
+	char* receive_array = reinterpret_cast<char*>(&receive_packet);
+	int receive_result = recv(accept_socket, receive_array, sizeof(receive_packet), 0);
 	if(receive_result == -1){
-		printf("Error: Could not receive from client.\n");
+		cout << "Error: Could not receive from manager." << endl;
+	}
+	if(DEBUG){ cout << "Received from manager: " << receive_packet.message << endl; }
+}
+
+void send_message_to_manager(int router_socket){
+	char message[] = "Hello manager! Nice to meet you!";
+	int send_result = send(router_socket, &message, sizeof(message), 0);
+	if(send_result == -1){
+		cout << "Error: Could not send message to manager." << endl;
+	}
+}
+
+int run_client(int port, const char* host)
+{
+	struct sockaddr_in router_address = {};
+
+	int router_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if(router_socket == -1){
+		cout << "Error: Could not create server socket." << endl;
 		return -1;
 	}
-		printf("Server: %s\n", receive_packet.message); //print message from client
-	
-	close(file_descriptor);
+
+	struct hostent *manager = gethostbyname(host);
+	if(manager == NULL){
+		cout << "Error: Could not find manager." << endl;
+		return -1;
+	}
+
+	router_address.sin_family = AF_INET; //set family
+	router_address.sin_port = htons(PORT_NUMBER); //convert and set port
+	router_address.sin_addr.s_addr = INADDR_ANY;
+
+	int connect_result = connect(router_socket, (struct sockaddr*)&router_address, sizeof(router_address));
+	if(connect_result == -1){
+		close(router_socket);			
+		cout << "Error: Could not connect to manager" << endl;
+		return -1;
+	}
+
+	send_message_to_manager(router_socket);
+	receive_manager_packet(router_socket);
+
+	close(router_socket);
 	return 0;
 }
 
@@ -98,9 +91,7 @@ int main(int argc, char* argv[]) {
 	// handle signals
 	signal(SIGINT/SIGTERM/SIGKILL, sig_handler);
 
-	cout << "got to the client" << endl;
-	char ip[] = "129.82.44.134";
-	run_client(PORT_NUMBER, ip);
+	run_client(PORT_NUMBER, "localhost");
 
     return 0;
 }
