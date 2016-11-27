@@ -21,6 +21,8 @@
 #include <fcntl.h>
 #include <cstdlib>
 #include <sys/stat.h>
+#include <map>
+#include <sstream>
 
 using namespace std;
 using namespace boost;
@@ -28,14 +30,29 @@ using namespace boost;
 #define PORT_NUMBER 20003
 #define MESSAGE_SIZE 140
 #define VERSION 457
+#define BASE_UDP_PORT 40000
+
 int NUM_NODES = 0;
 int DEBUG = 1;
 int MAX_CONNECTION_LENGTH = 8;
 vector<int> ROUTER_SOCKETS;
+map<int, struct router> ROUTERS;
 
 struct packet{
 	char message[MESSAGE_SIZE];
-};	
+};
+
+struct neighbor {
+	int id;
+	int cost;
+	int udp_port;
+};
+
+struct router {
+	int id;
+	int udp_port;
+	vector<struct neighbor> neighbors;
+};
 
 int print_help_message() {
     cout << endl << "manager help:" << endl << endl;
@@ -67,8 +84,27 @@ vector<string> read_topology_file(string* filename){
 		file.getline(connection, MAX_CONNECTION_LENGTH);
 		if(connection[0] == '-'){ eof = true; }
 		else{
-			string temp(connection);
-			topology.push_back(temp);
+			int router_id = connection[0] - '0';
+			int neighbor_id = connection[2] - '0';
+			int cost = connection[4] - '0';
+			
+			struct neighbor new_neighbor = {};
+			new_neighbor.id = neighbor_id;
+			new_neighbor.cost = cost;
+			
+			if(ROUTERS.find(router_id) != ROUTERS.end()) { // router struct has already been made
+				struct router r = ROUTERS[router_id];
+				r.neighbors.push_back(new_neighbor);
+			} else { // need to create new router struct
+				struct router new_router = {};
+				new_router.id = router_id;
+				new_router.udp_port = BASE_UDP_PORT + router_id; // All UDP ports = BASE_UDP_PORT + router id
+				new_router.neighbors.push_back(new_neighbor);
+				ROUTERS[router_id] = new_router;
+			}
+			
+			string line(connection);
+			topology.push_back(line);
 		}
 	}
 	

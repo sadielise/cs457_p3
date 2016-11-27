@@ -26,6 +26,8 @@ using namespace boost;
 #define VERSION 457
 int DEBUG = 1;
 
+int ROUTER_ID = -1;
+
 struct packet{
 	char message[MESSAGE_SIZE];
 };	
