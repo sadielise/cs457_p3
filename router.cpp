@@ -1,62 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <stdio.h>
-#include <iostream>
-#include <string>
-#include <cstring>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <limits.h>
-#include <netdb.h>
-#include <fstream>
-#include <vector>
-#include <boost/algorithm/string.hpp>
-#include <ctime>
-#include <signal.h>
+#include "project3.h"
 
-using namespace std;
-using namespace boost;
-
-#define PORT_NUMBER 20003
-#define MESSAGE_SIZE 140
-#define VERSION 457
 int DEBUG = 1;
-
-struct packet_header {
-	int num_neighbors;
-};
-
-struct packet{
-	char message[MESSAGE_SIZE];
-};	
-
-struct neighbor {
-	int id;
-	int cost;
-	int udp_port;
-	neighbor(){}
-	neighbor(int _id, int _cost, int _udp_port) {
-		id = _id;
-		cost = _cost;
-		udp_port = _udp_port;
-	}
-};
-
-struct router_node {
-	int id;
-	int udp_port;
-	vector<struct neighbor> neighbors;
-	router_node(){}
-	router_node(int _id, int _udp_port, vector<struct neighbor> _neighbors) {
-		id = _id;
-		udp_port = _udp_port;
-		neighbors = _neighbors;
-	}
-};
 
 struct router_node ROUTER_INFO;
 

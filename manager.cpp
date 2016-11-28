@@ -1,67 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <stdio.h>
-#include <iostream>
-#include <string>
-#include <cstring>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <limits.h>
-#include <netdb.h>
-#include <fstream>
-#include <vector>
-#include <boost/algorithm/string.hpp>
-#include <ctime>
-#include <signal.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <cstdlib>
-#include <sys/stat.h>
-#include <map>
-#include <sstream>
-
-using namespace std;
-using namespace boost;
-
-#define PORT_NUMBER 20003
-#define MESSAGE_SIZE 140
-#define VERSION 457
-#define BASE_UDP_PORT 40000
+#include "project3.h"
 
 int NUM_NODES = 0;
 int DEBUG = 1;
 int MAX_CONNECTION_LENGTH = 8;
 vector<int> ROUTER_SOCKETS;
 map<int, struct router_node> ROUTERS;
-
-struct packet_header {
-	int num_neighbors;
-};
-
-struct packet{
-	char message[MESSAGE_SIZE];
-};
-
-struct neighbor {
-	int id;
-	int cost;
-	int udp_port;
-	neighbor(int _id, int _cost, int _udp_port) {
-		id = _id;
-		cost = _cost;
-		udp_port = _udp_port;
-	}
-};
-
-struct router_node {
-	int id;
-	int udp_port;
-	vector<struct neighbor> neighbors;
-};
 
 int print_help_message() {
     cout << endl << "manager help:" << endl << endl;
