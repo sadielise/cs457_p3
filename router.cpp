@@ -26,10 +26,8 @@ using namespace boost;
 #define VERSION 457
 int DEBUG = 1;
 
-int ROUTER_ID = -1;
-
-struct header_packet {
-	int byte_size;
+struct packet_header {
+	int num_neighbors;
 };
 
 struct packet{
@@ -40,23 +38,55 @@ struct neighbor {
 	int id;
 	int cost;
 	int udp_port;
+	neighbor(){}
+	neighbor(int _id, int _cost, int _udp_port) {
+		id = _id;
+		cost = _cost;
+		udp_port = _udp_port;
+	}
 };
 
 struct router_node {
 	int id;
 	int udp_port;
 	vector<struct neighbor> neighbors;
+	router_node(){}
+	router_node(int _id, int _udp_port, vector<struct neighbor> _neighbors) {
+		id = _id;
+		udp_port = _udp_port;
+		neighbors = _neighbors;
+	}
 };
 
+struct router_node ROUTER_INFO;
+
 void receive_manager_packet(int accept_socket){
-	struct router_node router_info = {};
-	int receive_result = recv(accept_socket, reinterpret_cast<char*>(&router_info), sizeof(router_info), 0);
+	struct router_node route;
+	int receive_result = recv(accept_socket, reinterpret_cast<char*>(&route), sizeof(route), 0);
 	if(receive_result == -1){
 		cout << "Error: Could not receive from manager." << endl;
 	}
 	
-	if(DEBUG){ 
-		cout << "Received from manager:  My ID: " << router_info.id << " My UDP Port: " << router_info.udp_port <<  " # Neighbors: " << router_info.neighbors.size() <<endl;
+	struct packet_header pack_head;
+	recv(accept_socket, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0);
+	
+	vector<neighbor> r_neighbors;
+	
+	for(int i = 0; i < pack_head.num_neighbors; i++) {
+		struct neighbor n;
+		recv(accept_socket, reinterpret_cast<char*>(&n), sizeof(n), 0);
+		r_neighbors.push_back(n);
+	}
+	
+	ROUTER_INFO = router_node(route.id, route.udp_port, r_neighbors);
+	
+	if(DEBUG) {
+		cout << "Router Info ... ID: " << ROUTER_INFO.id << " UDP Port: " << ROUTER_INFO.udp_port << endl;
+		cout << "Neighbors (" << ROUTER_INFO.neighbors.size() << ")..." << endl;
+		for(unsigned int i = 0; i < ROUTER_INFO.neighbors.size(); i++) {
+			cout << "    Neighbor - ID: " << ROUTER_INFO.neighbors.at(i).id << " Cost: " << ROUTER_INFO.neighbors.at(i).cost << " UDP Port: " << ROUTER_INFO.neighbors.at(i).udp_port << endl;
+		}
+		cout << endl;
 	}
 }
 

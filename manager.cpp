@@ -38,8 +38,8 @@ int MAX_CONNECTION_LENGTH = 8;
 vector<int> ROUTER_SOCKETS;
 map<int, struct router_node> ROUTERS;
 
-struct header_packet {
-	int byte_size;
+struct packet_header {
+	int num_neighbors;
 };
 
 struct packet{
@@ -133,6 +133,15 @@ void send_message_to_router(int accept_socket, int router_id){
 	int send_result = send(accept_socket, reinterpret_cast<char*>(&r), sizeof(r), 0);
 	if(send_result == -1){
 		cout << "Error: Could not send data to router." << endl;
+	}
+	
+	struct packet_header pack_head = {};
+	pack_head.num_neighbors = r.neighbors.size();
+	send(accept_socket, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0);
+	
+	for(unsigned int i = 0; i < r.neighbors.size(); i++) {
+		struct neighbor n = r.neighbors.at(i);
+		send(accept_socket, reinterpret_cast<char*>(&n), sizeof(n), 0);
 	}
 }
 
