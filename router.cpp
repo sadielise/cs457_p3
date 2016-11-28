@@ -28,6 +28,10 @@ int DEBUG = 1;
 
 int ROUTER_ID = -1;
 
+struct header_packet {
+	int byte_size;
+};
+
 struct packet{
 	char message[MESSAGE_SIZE];
 };	
@@ -50,12 +54,9 @@ void receive_manager_packet(int accept_socket){
 	if(receive_result == -1){
 		cout << "Error: Could not receive from manager." << endl;
 	}
+	
 	if(DEBUG){ 
-		cout << "Received from manager:  My ID: " << router_info.id << " My UDP Port: " << router_info.udp_port << endl;
-		cout << "My Neighbors..." << endl;
-		for(unsigned int i = 0; i < router_info.neighbors.size(); i++) {
-			cout << "Neighbor ID: " << router_info.neighbors.at(i).id << " Cost: " << router_info.neighbors.at(i).id << " UDP Port: " << router_info.neighbors.at(i).udp_port << endl;
-		}
+		cout << "Received from manager:  My ID: " << router_info.id << " My UDP Port: " << router_info.udp_port <<  " # Neighbors: " << router_info.neighbors.size() <<endl;
 	}
 }
 

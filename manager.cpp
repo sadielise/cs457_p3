@@ -38,6 +38,10 @@ int MAX_CONNECTION_LENGTH = 8;
 vector<int> ROUTER_SOCKETS;
 map<int, struct router_node> ROUTERS;
 
+struct header_packet {
+	int byte_size;
+};
+
 struct packet{
 	char message[MESSAGE_SIZE];
 };
@@ -46,6 +50,11 @@ struct neighbor {
 	int id;
 	int cost;
 	int udp_port;
+	neighbor(int _id, int _cost, int _udp_port) {
+		id = _id;
+		cost = _cost;
+		udp_port = _udp_port;
+	}
 };
 
 struct router_node {
@@ -99,14 +108,7 @@ vector<string> read_topology_file(string* filename){
 			int neighbor_id = connection[2] - '0';
 			int cost = connection[4] - '0';
 			
-			struct neighbor new_neighbor = {};
-			new_neighbor.id = neighbor_id;
-			new_neighbor.cost = cost;
-			new_neighbor.udp_port = BASE_UDP_PORT + neighbor_id;
-			
-			if(ROUTERS.find(router_id) != ROUTERS.end()) {
-				ROUTERS[router_id].neighbors.push_back(new_neighbor);
-			}
+			ROUTERS[router_id].neighbors.push_back(neighbor(neighbor_id, cost, BASE_UDP_PORT + neighbor_id));
 			
 			string line(connection);
 			topology.push_back(line);
@@ -130,7 +132,7 @@ void send_message_to_router(int accept_socket, int router_id){
 	struct router_node r = ROUTERS[router_id];
 	int send_result = send(accept_socket, reinterpret_cast<char*>(&r), sizeof(r), 0);
 	if(send_result == -1){
-		cout << "Error: Could not send message to router." << endl;
+		cout << "Error: Could not send data to router." << endl;
 	}
 }
 
