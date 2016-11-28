@@ -32,18 +32,35 @@ struct packet{
 	char message[MESSAGE_SIZE];
 };	
 
+struct neighbor {
+	int id;
+	int cost;
+	int udp_port;
+};
+
+struct router_node {
+	int id;
+	int udp_port;
+	vector<struct neighbor> neighbors;
+};
+
 void receive_manager_packet(int accept_socket){
-	struct packet receive_packet = {};
-	char* receive_array = reinterpret_cast<char*>(&receive_packet);
-	int receive_result = recv(accept_socket, receive_array, sizeof(receive_packet), 0);
+	struct router_node router_info = {};
+	int receive_result = recv(accept_socket, reinterpret_cast<char*>(&router_info), sizeof(router_info), 0);
 	if(receive_result == -1){
 		cout << "Error: Could not receive from manager." << endl;
 	}
-	if(DEBUG){ cout << "Received from manager: " << receive_packet.message << endl; }
+	if(DEBUG){ 
+		cout << "Received from manager:  My ID: " << router_info.id << " My UDP Port: " << router_info.udp_port << endl;
+		cout << "My Neighbors..." << endl;
+		for(unsigned int i = 0; i < router_info.neighbors.size(); i++) {
+			cout << "Neighbor ID: " << router_info.neighbors.at(i).id << " Cost: " << router_info.neighbors.at(i).id << " UDP Port: " << router_info.neighbors.at(i).udp_port << endl;
+		}
+	}
 }
 
 void send_message_to_manager(int router_socket){
-	char message[] = "Hello manager! Nice to meet you!";
+	char message[] = "Hello manager! Nice to meet you! Can you pass along my routing information?";
 	int send_result = send(router_socket, &message, sizeof(message), 0);
 	if(send_result == -1){
 		cout << "Error: Could not send message to manager." << endl;

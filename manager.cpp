@@ -36,7 +36,7 @@ int NUM_NODES = 0;
 int DEBUG = 1;
 int MAX_CONNECTION_LENGTH = 8;
 vector<int> ROUTER_SOCKETS;
-map<int, struct router> ROUTERS;
+map<int, struct router_node> ROUTERS;
 
 struct packet{
 	char message[MESSAGE_SIZE];
@@ -48,7 +48,7 @@ struct neighbor {
 	int udp_port;
 };
 
-struct router {
+struct router_node {
 	int id;
 	int udp_port;
 	vector<struct neighbor> neighbors;
@@ -60,6 +60,15 @@ int print_help_message() {
     cout << "input file: network topology description" << endl;
 	exit(EXIT_FAILURE);
     return -1;
+}
+
+void create_routers() {
+	for(int i = 0; i < NUM_NODES; i++) {
+		struct router_node new_router = {};
+		new_router.id = i;
+		new_router.udp_port = BASE_UDP_PORT + i; // All UDP ports = BASE_UDP_PORT + router id
+		ROUTERS[i] = new_router;
+	}
 }
 
 void print_topology(int numNodes, vector<string>* topology){
@@ -76,6 +85,8 @@ vector<string> read_topology_file(string* filename){
 	file >> NUM_NODES;
 	char tempArray[1];
 	file.getline(tempArray, 1);
+	
+	create_routers();
 
 	vector<string> topology;
 	bool eof = false;
@@ -91,16 +102,10 @@ vector<string> read_topology_file(string* filename){
 			struct neighbor new_neighbor = {};
 			new_neighbor.id = neighbor_id;
 			new_neighbor.cost = cost;
+			new_neighbor.udp_port = BASE_UDP_PORT + neighbor_id;
 			
-			if(ROUTERS.find(router_id) != ROUTERS.end()) { // router struct has already been made
-				struct router r = ROUTERS[router_id];
-				r.neighbors.push_back(new_neighbor);
-			} else { // need to create new router struct
-				struct router new_router = {};
-				new_router.id = router_id;
-				new_router.udp_port = BASE_UDP_PORT + router_id; // All UDP ports = BASE_UDP_PORT + router id
-				new_router.neighbors.push_back(new_neighbor);
-				ROUTERS[router_id] = new_router;
+			if(ROUTERS.find(router_id) != ROUTERS.end()) {
+				ROUTERS[router_id].neighbors.push_back(new_neighbor);
 			}
 			
 			string line(connection);
@@ -121,13 +126,12 @@ void receive_router_packet(int accept_socket, int i){
 	if(DEBUG){ cout << "Received from router " << i << ": " << receive_packet.message << endl; }
 }
 
-void send_message_to_router(int accept_socket){
-	char message[] = "Greetings, router! Nice to meet you too!";
-	int send_result = send(accept_socket, &message, sizeof(message), 0);
+void send_message_to_router(int accept_socket, int router_id){
+	struct router_node r = ROUTERS[router_id];
+	int send_result = send(accept_socket, reinterpret_cast<char*>(&r), sizeof(r), 0);
 	if(send_result == -1){
 		cout << "Error: Could not send message to router." << endl;
 	}
-
 }
 
 int accept_router_connection(int manager_socket){
@@ -157,7 +161,7 @@ int connect_to_routers(int manager_socket){
 			}
 			ROUTER_SOCKETS.push_back(accept_socket);
 			receive_router_packet(accept_socket, i);
-			send_message_to_router(accept_socket);
+			send_message_to_router(accept_socket, i);
 			_exit(0);
 		}
 		if(pid > 0){ // child
