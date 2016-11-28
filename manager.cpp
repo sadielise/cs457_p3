@@ -14,6 +14,16 @@ int print_help_message() {
     return -1;
 }
 
+vector<string> split(const string &s, char delim) {
+    stringstream ss(s);
+    string item;
+    vector<string> tokens;
+    while (getline(ss, item, delim)) {
+        tokens.push_back(item);
+    }
+    return tokens;
+}
+
 void create_routers() {
 	for(int i = 0; i < NUM_NODES; i++) {
 		struct router_node new_router = {};
@@ -47,13 +57,15 @@ vector<string> read_topology_file(string* filename){
 		file.getline(connection, MAX_CONNECTION_LENGTH);
 		if(connection[0] == '-'){ eof = true; }
 		else{
-			int router_id = connection[0] - '0';
-			int neighbor_id = connection[2] - '0';
-			int cost = connection[4] - '0';
+			string line(connection);
+			vector<string> elements = split(line, ' ');
+			
+			int router_id = stoi(elements.at(0));
+			int neighbor_id = stoi(elements.at(1));
+			int cost = stoi(elements.at(2));
 			
 			ROUTERS[router_id].neighbors.push_back(neighbor(neighbor_id, cost, BASE_UDP_PORT + neighbor_id));
 			
-			string line(connection);
 			topology.push_back(line);
 		}
 	}
