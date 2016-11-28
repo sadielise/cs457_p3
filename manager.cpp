@@ -1,41 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <stdio.h>
-#include <iostream>
-#include <string>
-#include <cstring>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <limits.h>
-#include <netdb.h>
-#include <fstream>
-#include <vector>
-#include <boost/algorithm/string.hpp>
-#include <ctime>
-#include <signal.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <cstdlib>
-#include <sys/stat.h>
+#include "project3.h"
 
-using namespace std;
-using namespace boost;
-
-#define PORT_NUMBER 20003
-#define MESSAGE_SIZE 140
-#define VERSION 457
 int NUM_NODES = 0;
 int DEBUG = 1;
 int MAX_CONNECTION_LENGTH = 8;
 vector<int> ROUTER_SOCKETS;
-
-struct packet{
-	char message[MESSAGE_SIZE];
-};	
+map<int, struct router_node> ROUTERS;
 
 int print_help_message() {
     cout << endl << "manager help:" << endl << endl;
@@ -43,6 +12,25 @@ int print_help_message() {
     cout << "input file: network topology description" << endl;
 	exit(EXIT_FAILURE);
     return -1;
+}
+
+vector<string> split(const string &s, char delim) {
+    stringstream ss(s);
+    string item;
+    vector<string> tokens;
+    while (getline(ss, item, delim)) {
+        tokens.push_back(item);
+    }
+    return tokens;
+}
+
+void create_routers() {
+	for(int i = 0; i < NUM_NODES; i++) {
+		struct router_node new_router = {};
+		new_router.id = i;
+		new_router.udp_port = BASE_UDP_PORT + i; // All UDP ports = BASE_UDP_PORT + router id
+		ROUTERS[i] = new_router;
+	}
 }
 
 void print_topology(int numNodes, vector<string>* topology){
@@ -59,6 +47,8 @@ vector<string> read_topology_file(string* filename){
 	file >> NUM_NODES;
 	char tempArray[1];
 	file.getline(tempArray, 1);
+	
+	create_routers();
 
 	vector<string> topology;
 	bool eof = false;
@@ -67,8 +57,16 @@ vector<string> read_topology_file(string* filename){
 		file.getline(connection, MAX_CONNECTION_LENGTH);
 		if(connection[0] == '-'){ eof = true; }
 		else{
-			string temp(connection);
-			topology.push_back(temp);
+			string line(connection);
+			vector<string> elements = split(line, ' ');
+			
+			int router_id = stoi(elements.at(0));
+			int neighbor_id = stoi(elements.at(1));
+			int cost = stoi(elements.at(2));
+			
+			ROUTERS[router_id].neighbors.push_back(neighbor(neighbor_id, cost, BASE_UDP_PORT + neighbor_id));
+			
+			topology.push_back(line);
 		}
 	}
 	
@@ -85,13 +83,21 @@ void receive_router_packet(int accept_socket, int i){
 	if(DEBUG){ cout << "Received from router " << i << ": " << receive_packet.message << endl; }
 }
 
-void send_message_to_router(int accept_socket){
-	char message[] = "Greetings, router! Nice to meet you too!";
-	int send_result = send(accept_socket, &message, sizeof(message), 0);
+void send_message_to_router(int accept_socket, int router_id){
+	struct router_node r = ROUTERS[router_id];
+	int send_result = send(accept_socket, reinterpret_cast<char*>(&r), sizeof(r), 0);
 	if(send_result == -1){
-		cout << "Error: Could not send message to router." << endl;
+		cout << "Error: Could not send data to router." << endl;
 	}
-
+	
+	struct packet_header pack_head = {};
+	pack_head.num_neighbors = r.neighbors.size();
+	send(accept_socket, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0);
+	
+	for(unsigned int i = 0; i < r.neighbors.size(); i++) {
+		struct neighbor n = r.neighbors.at(i);
+		send(accept_socket, reinterpret_cast<char*>(&n), sizeof(n), 0);
+	}
 }
 
 int accept_router_connection(int manager_socket){
@@ -121,7 +127,7 @@ int connect_to_routers(int manager_socket){
 			}
 			ROUTER_SOCKETS.push_back(accept_socket);
 			receive_router_packet(accept_socket, i);
-			send_message_to_router(accept_socket);
+			send_message_to_router(accept_socket, i);
 			_exit(0);
 		}
 		if(pid > 0){ // child
