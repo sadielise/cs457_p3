@@ -118,28 +118,25 @@ void close_router_connections(){
 	}
 }
 
-int connect_to_routers(int manager_socket){
+void connect_to_routers(int manager_socket){
 	for(int i = 0; i < NUM_NODES; i++){
-		int pid = fork();
-		if(pid == 0){ // parent
+		pid_t pid = fork();
+		
+		if(pid == 0) { // child process
+			system("./router");
+			cout << "FINISHED ROUTER" << endl;
+			_exit(0);
+		} else if(pid > 0) { // parent_process
 			int accept_socket = accept_router_connection(manager_socket);
-			if(accept_socket == -1){
-				return -1;
-			}
+			if(accept_socket == -1) return;
 			ROUTER_SOCKETS.push_back(accept_socket);
 			receive_router_packet(accept_socket, i);
 			send_message_to_router(accept_socket, i);
-			_exit(0);
-		}
-		if(pid > 0){ // child
-			system("./router");
-		}
-		else if(pid < 0){
+		} else {
 			cout << "fork failed" << endl;
 			exit(-1);
 		}
 	}
-	return 0;
 }
 
 int start_listening()
@@ -190,18 +187,28 @@ int main(int argc, char* argv[]) {
 	// read topology file
 	if(DEBUG){ cout << "Reading topology file..." << endl; }
 	vector<string> topology = read_topology_file(&filename);
+	
 	if(DEBUG){ print_topology(NUM_NODES, &topology); }
 
 	// create the output file
 	if(DEBUG){ cout << "Creating output file..." << endl; }
-	int fd = open("output.txt", O_RDWR | O_CREAT);
-	chmod("output.txt", 0666);
+	int fd = open("outputFiles/manager.out", O_RDWR | O_CREAT);
+	chmod("outputFiles/manager.out", 0666);
 
 	// start listening for routers
 	int manager_router = start_listening();
 
 	// connect to routers
 	connect_to_routers(manager_router);
+	
+	while(true){};
+	
+	int status;
+	int tempN = NUM_NODES;
+	while(tempN > 0){
+		wait(&status);
+		tempN--;
+	}
 
 	// close router connections
 	close_router_connections();
@@ -209,13 +216,6 @@ int main(int argc, char* argv[]) {
 	// close manager 
 	close(manager_router);
 	
-	/*int status;
-	int tempN = NUM_NODES;
-	while(tempN > 0){
-		wait(&status);
-		tempN--;
-	}*/		
-
 	close(fd);
     exit(0);
 }
