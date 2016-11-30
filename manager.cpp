@@ -67,6 +67,7 @@ vector<string> read_topology_file(string* filename){
 			int cost = stoi(elements.at(2));
 			
 			ROUTER_NEIGHBORS[router_id].push_back(neighbor(neighbor_id, cost, BASE_UDP_PORT + neighbor_id));
+			ROUTER_NEIGHBORS[neighbor_id].push_back(neighbor(router_id, cost, BASE_UDP_PORT + router_id));
 			
 			topology.push_back(line);
 		}
