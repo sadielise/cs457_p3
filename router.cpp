@@ -2,7 +2,11 @@
 
 int DEBUG = 1;
 
-struct router_node ROUTER_INFO;
+struct router_node MY_ROUTER_INFO;
+
+vector<int> known_routers;
+map<int, int> costs;
+map<int, int> previous_step;
 
 void receive_manager_packet(int accept_socket){
 	struct router_node route;
@@ -22,13 +26,13 @@ void receive_manager_packet(int accept_socket){
 		r_neighbors.push_back(n);
 	}
 	
-	ROUTER_INFO = router_node(route.id, route.udp_port, r_neighbors);
+	MY_ROUTER_INFO = router_node(route.id, route.num_routers, route.udp_port, r_neighbors);
 	
 	if(DEBUG) {
-		cout << "Router Info ... ID: " << ROUTER_INFO.id << " UDP Port: " << ROUTER_INFO.udp_port << endl;
-		cout << "Neighbors (" << ROUTER_INFO.neighbors.size() << ")..." << endl;
-		for(unsigned int i = 0; i < ROUTER_INFO.neighbors.size(); i++) {
-			cout << "    Neighbor - ID: " << ROUTER_INFO.neighbors.at(i).id << " Cost: " << ROUTER_INFO.neighbors.at(i).cost << " UDP Port: " << ROUTER_INFO.neighbors.at(i).udp_port << endl;
+		cout << "Router Info ... ID: " << MY_ROUTER_INFO.id << " UDP Port: " << MY_ROUTER_INFO.udp_port << endl;
+		cout << "Neighbors (" << MY_ROUTER_INFO.neighbors.size() << ")..." << endl;
+		for(unsigned int i = 0; i < MY_ROUTER_INFO.neighbors.size(); i++) {
+			cout << "    Neighbor - ID: " << MY_ROUTER_INFO.neighbors.at(i).id << " Cost: " << MY_ROUTER_INFO.neighbors.at(i).cost << " UDP Port: " << MY_ROUTER_INFO.neighbors.at(i).udp_port << endl;
 		}
 		cout << endl;
 	}
@@ -40,6 +44,17 @@ void send_message_to_manager(int router_socket){
 	if(send_result == -1){
 		cout << "Error: Could not send message to manager." << endl;
 	}
+}
+
+void run_link_state_alg() {
+	// assign own info for link state
+	known_routers.push_back(MY_ROUTER_INFO.id);
+	for(neighbor n : MY_ROUTER_INFO.neighbors) {
+		costs[n.id] = n.cost;
+		previous_step[n.id] = MY_ROUTER_INFO.id;
+	}
+	
+	// ask for neighbors' neighbor info
 }
 
 int run_client(int port, const char* host)
@@ -71,6 +86,8 @@ int run_client(int port, const char* host)
 
 	send_message_to_manager(router_socket);
 	receive_manager_packet(router_socket);
+	
+	run_link_state_alg();
 
 	close(router_socket);
 	return 0;

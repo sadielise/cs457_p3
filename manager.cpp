@@ -28,6 +28,7 @@ void create_routers() {
 	for(int i = 0; i < NUM_NODES; i++) {
 		struct router_node new_router = {};
 		new_router.id = i;
+		new_router.num_routers = NUM_NODES;
 		new_router.udp_port = BASE_UDP_PORT + i; // All UDP ports = BASE_UDP_PORT + router id
 		ROUTERS[i] = new_router;
 	}
