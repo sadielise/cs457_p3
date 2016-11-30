@@ -10,7 +10,8 @@ int MANAGER_SOCKET;
 struct router_node MY_ROUTER_INFO;
 map<int, sockaddr_in> NEIGHBOR_ADDRS;
 
-map<int, router_node> NETWORK;
+map<int, router_node> ROUTERS;
+map<int, vector<neighbor>> ROUTER_NEIGHBORS;
 
 vector<int> KNOWN_ROUTERS;
 map<int, int> COSTS;
@@ -22,10 +23,11 @@ void console_log(string output) {
 }
 
 void print_network_to_file() {
-	for(auto const& router : NETWORK) {
+	console_log("printing network to file");
+	for(auto const& router : ROUTERS) {
 		ROUTER_FILE << "Router " << router.second.id << " UDP port: " << router.second.udp_port << endl;
 		ROUTER_FILE << "    Neighbors:"  << endl;
-		for(neighbor n : router.second.neighbors) {
+		for(neighbor n : ROUTER_NEIGHBORS[router.second.id]) {
 			ROUTER_FILE << "    Neighbor ID: " << n.id << " cost: " << n.cost << " UDP port: " << n.udp_port << endl;
 		}
 	}
@@ -49,13 +51,14 @@ void receive_manager_packet(int accept_socket){
 		r_neighbors.push_back(n);
 	}
 	
-	MY_ROUTER_INFO = router_node(route.id, route.num_routers, route.udp_port, r_neighbors);
+	MY_ROUTER_INFO = router_node(route.id, route.num_routers, route.udp_port);
+	ROUTER_NEIGHBORS[MY_ROUTER_INFO.id] = r_neighbors;
 	
 	if(DEBUG) {
 		cout << "Router Info ... ID: " << MY_ROUTER_INFO.id << " UDP Port: " << MY_ROUTER_INFO.udp_port << endl;
-		cout << "Neighbors (" << MY_ROUTER_INFO.neighbors.size() << ")..." << endl;
-		for(unsigned int i = 0; i < MY_ROUTER_INFO.neighbors.size(); i++) {
-			cout << "    Neighbor - ID: " << MY_ROUTER_INFO.neighbors.at(i).id << " Cost: " << MY_ROUTER_INFO.neighbors.at(i).cost << " UDP Port: " << MY_ROUTER_INFO.neighbors.at(i).udp_port << endl;
+		cout << "Neighbors (" << ROUTER_NEIGHBORS[MY_ROUTER_INFO.id].size() << ")..." << endl;
+		for(unsigned int i = 0; i < ROUTER_NEIGHBORS[MY_ROUTER_INFO.id].size(); i++) {
+			cout << "    Neighbor - ID: " << ROUTER_NEIGHBORS[MY_ROUTER_INFO.id].at(i).id << " Cost: " << ROUTER_NEIGHBORS[MY_ROUTER_INFO.id].at(i).cost << " UDP Port: " << ROUTER_NEIGHBORS[MY_ROUTER_INFO.id].at(i).udp_port << endl;
 		}
 		cout << endl;
 	}
@@ -71,7 +74,7 @@ void send_message_to_manager(int router_socket){
 }
 
 void populate_neighbor_addrs() {
-	for(neighbor n : MY_ROUTER_INFO.neighbors) {
+	for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
 		struct sockaddr_in neighbor_addr;
 		socket(AF_INET, SOCK_DGRAM, 0);
 		
@@ -83,7 +86,7 @@ void populate_neighbor_addrs() {
 	}
 }
 
-struct router_node receive_udp_router_node(int* sender_port) {
+tuple<struct router_node, vector<neighbor>> receive_udp_router_node(int* sender_port) {
 	struct sockaddr_in sender_addr;
 	socklen_t addrlen = sizeof(sender_addr);
 	
@@ -102,21 +105,21 @@ struct router_node receive_udp_router_node(int* sender_port) {
 	}
 	
 	*sender_port = sender_addr.sin_port;
-	return router_node(router_info.id, router_info.num_routers, router_info.udp_port, router_neighbors);
+	return make_tuple(router_node(router_info.id, router_info.num_routers, router_info.udp_port), router_neighbors);
 }
 
-void forward_router_info(struct router_node router_info, int sender_port, bool broadcast) {
-	for(neighbor n : MY_ROUTER_INFO.neighbors) {
+void forward_router_info(struct router_node router_info, vector<neighbor> neighbors, int sender_port, bool broadcast) {
+	for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
 		if(broadcast || n.udp_port != sender_port) {
 			struct sockaddr_in neighbor_addr = NEIGHBOR_ADDRS[n.id];
 			sendto(MY_UDP_SOCKET, reinterpret_cast<char*>(&router_info), sizeof(router_info), 0, (struct sockaddr*)&neighbor_addr, sizeof(neighbor_addr));
 			
 			struct packet_header pack_head;
-			pack_head.num_neighbors = router_info.neighbors.size();
+			pack_head.num_neighbors = neighbors.size();
 			sendto(MY_UDP_SOCKET, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0, (struct sockaddr*)&neighbor_addr, sizeof(neighbor_addr));
 			
-			for(unsigned int i = 0; i < router_info.neighbors.size(); i++) {
-				struct neighbor n = router_info.neighbors.at(i);
+			for(unsigned int i = 0; i < neighbors.size(); i++) {
+				struct neighbor n = neighbors.at(i);
 				sendto(MY_UDP_SOCKET, reinterpret_cast<char*>(&n), sizeof(n), 0, (struct sockaddr*)&neighbor_addr, sizeof(neighbor_addr));
 			}
 		}
@@ -134,21 +137,23 @@ void listen_and_forward_router_info() {
 	
 	bind(MY_UDP_SOCKET, (struct sockaddr*)&my_addr, sizeof(my_addr));
 	
-	while(NETWORK.size() < ((unsigned int) MY_ROUTER_INFO.num_routers)) {
+	console_log("ROUTERS SIZE BEFORE: " + ROUTERS.size());
+	while(ROUTERS.size() < ((unsigned int) MY_ROUTER_INFO.num_routers)) {
 		int sender_port;
-		struct router_node router = receive_udp_router_node(&sender_port);
+		tuple<struct router_node, vector<neighbor>> router_and_neighbors = receive_udp_router_node(&sender_port);
 		
-		if(NETWORK.find(router.id) == NETWORK.end()) {
-			NETWORK[router.id] = router;
-			thread forward_info(forward_router_info, router, sender_port, false);
+		if(ROUTERS.find(get<0>(router_and_neighbors).id) == ROUTERS.end()) {
+			ROUTERS[get<0>(router_and_neighbors).id] = get<0>(router_and_neighbors);
+			thread forward_info(forward_router_info, get<0>(router_and_neighbors), get<1>(router_and_neighbors), sender_port, false);
 			forward_info.join();
 		}
 	}
+	console_log("ROUTERS SIZE AFTER: " + ROUTERS.size());
 }
 
 void forward_my_router_info() {
 	this_thread::sleep_for(chrono::milliseconds(3000));
-	forward_router_info(MY_ROUTER_INFO, 0, true);
+	forward_router_info(MY_ROUTER_INFO, ROUTER_NEIGHBORS[MY_ROUTER_INFO.id], 0, true);
 }
 
 int find_least_cost_unkown_router() {
@@ -168,7 +173,7 @@ int find_least_cost_unkown_router() {
 void run_link_state_alg() {
 	// assign own info for link state
 	KNOWN_ROUTERS.push_back(MY_ROUTER_INFO.id);
-	for(neighbor n : MY_ROUTER_INFO.neighbors) {
+	for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
 		COSTS[n.id] = n.cost;
 		PREVIOUS_STEP[n.id] = MY_ROUTER_INFO.id;
 	}
@@ -223,10 +228,11 @@ int main(int argc, char* argv[]) {
 	
 	// Get MY_ROUTER_INFO
 	run_client(PORT_NUMBER, "localhost");
+	cout << "COMPLETED RUN CLIENT" << endl;
 	populate_neighbor_addrs();
 	
 	// Create router file
-	string filename = "outputFiles/" + to_string(MY_ROUTER_INFO.id) + ".out";
+	string filename = to_string(MY_ROUTER_INFO.id) + ".out";
 	ROUTER_FILE.open(filename.c_str(), ios::out | ios::app);
 	chmod(filename.c_str(), 0666);
 	

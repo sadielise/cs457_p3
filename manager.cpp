@@ -5,6 +5,7 @@ int DEBUG = 1;
 int MAX_CONNECTION_LENGTH = 8;
 vector<int> ROUTER_SOCKETS;
 map<int, struct router_node> ROUTERS;
+map<int, vector<neighbor>> ROUTER_NEIGHBORS;
 
 int print_help_message() {
     cout << endl << "manager help:" << endl << endl;
@@ -65,7 +66,7 @@ vector<string> read_topology_file(string* filename){
 			int neighbor_id = stoi(elements.at(1));
 			int cost = stoi(elements.at(2));
 			
-			ROUTERS[router_id].neighbors.push_back(neighbor(neighbor_id, cost, BASE_UDP_PORT + neighbor_id));
+			ROUTER_NEIGHBORS[router_id].push_back(neighbor(neighbor_id, cost, BASE_UDP_PORT + neighbor_id));
 			
 			topology.push_back(line);
 		}
@@ -92,11 +93,11 @@ void send_message_to_router(int accept_socket, int router_id){
 	}
 	
 	struct packet_header pack_head = {};
-	pack_head.num_neighbors = r.neighbors.size();
+	pack_head.num_neighbors = ROUTER_NEIGHBORS[r.id].size();
 	send(accept_socket, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0);
 	
-	for(unsigned int i = 0; i < r.neighbors.size(); i++) {
-		struct neighbor n = r.neighbors.at(i);
+	for(unsigned int i = 0; i < ROUTER_NEIGHBORS[r.id].size(); i++) {
+		struct neighbor n = ROUTER_NEIGHBORS[r.id].at(i);
 		send(accept_socket, reinterpret_cast<char*>(&n), sizeof(n), 0);
 	}
 }
@@ -192,16 +193,14 @@ int main(int argc, char* argv[]) {
 
 	// create the output file
 	if(DEBUG){ cout << "Creating output file..." << endl; }
-	int fd = open("outputFiles/manager.out", O_RDWR | O_CREAT);
-	chmod("outputFiles/manager.out", 0666);
+	int fd = open("manager.out", O_RDWR | O_CREAT);
+	chmod("manager.out", 0666);
 
 	// start listening for routers
 	int manager_router = start_listening();
 
 	// connect to routers
 	connect_to_routers(manager_router);
-	
-	while(true){};
 	
 	int status;
 	int tempN = NUM_NODES;

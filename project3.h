@@ -27,6 +27,7 @@
 #include <sstream>
 #include <chrono>
 #include <thread>
+#include <tuple>
 
 using namespace std;
 using namespace boost;
@@ -60,13 +61,11 @@ struct router_node {
 	int id;
 	int num_routers;
 	int udp_port;
-	vector<struct neighbor> neighbors;
 	router_node(){}
-	router_node(int _id, int _num_routers, int _udp_port, vector<struct neighbor> _neighbors) {
+	router_node(int _id, int _num_routers, int _udp_port) {
 		id = _id;
 		num_routers = _num_routers;
 		udp_port = _udp_port;
-		neighbors = _neighbors;
 	}
 };
 
