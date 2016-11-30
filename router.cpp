@@ -17,13 +17,7 @@ vector<int> KNOWN_ROUTERS;
 map<int, int> COSTS;
 map<int, int> PREVIOUS_STEP;
 
-
-void console_log(string output) {
-	cout << "[" << MY_ROUTER_INFO.id << "]: " << output << endl;
-}
-
 void print_network_to_file() {
-	console_log("printing network to file");
 	for(auto const& router : ROUTERS) {
 		ROUTER_FILE << "Router " << router.second.id << " UDP port: " << router.second.udp_port << endl;
 		ROUTER_FILE << "    Neighbors:"  << endl;
@@ -137,18 +131,17 @@ void listen_and_forward_router_info() {
 	
 	bind(MY_UDP_SOCKET, (struct sockaddr*)&my_addr, sizeof(my_addr));
 	
-	console_log("ROUTERS SIZE BEFORE: " + ROUTERS.size());
 	while(ROUTERS.size() < ((unsigned int) MY_ROUTER_INFO.num_routers)) {
 		int sender_port;
 		tuple<struct router_node, vector<neighbor>> router_and_neighbors = receive_udp_router_node(&sender_port);
 		
 		if(ROUTERS.find(get<0>(router_and_neighbors).id) == ROUTERS.end()) {
 			ROUTERS[get<0>(router_and_neighbors).id] = get<0>(router_and_neighbors);
+			ROUTER_NEIGHBORS[get<0>(router_and_neighbors).id] = get<1>(router_and_neighbors);
 			thread forward_info(forward_router_info, get<0>(router_and_neighbors), get<1>(router_and_neighbors), sender_port, false);
 			forward_info.join();
 		}
 	}
-	console_log("ROUTERS SIZE AFTER: " + ROUTERS.size());
 }
 
 void forward_my_router_info() {
@@ -228,11 +221,11 @@ int main(int argc, char* argv[]) {
 	
 	// Get MY_ROUTER_INFO
 	run_client(PORT_NUMBER, "localhost");
-	cout << "COMPLETED RUN CLIENT" << endl;
 	populate_neighbor_addrs();
 	
 	// Create router file
 	string filename = to_string(MY_ROUTER_INFO.id) + ".out";
+	remove(filename.c_str()); // clear the file if it already exists
 	ROUTER_FILE.open(filename.c_str(), ios::out | ios::app);
 	chmod(filename.c_str(), 0666);
 	
