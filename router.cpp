@@ -53,6 +53,7 @@ void receive_manager_packet(int accept_socket){
 	}
 	
 	MY_ROUTER_INFO = router_node(route.id, route.num_routers, route.udp_port);
+	ROUTERS[MY_ROUTER_INFO.id] = MY_ROUTER_INFO;
 	ROUTER_NEIGHBORS[MY_ROUTER_INFO.id] = r_neighbors;
 	
 	if(DEBUG) {
@@ -137,7 +138,6 @@ void listen_and_forward_router_info() {
 	my_addr.sin_addr.s_addr = INADDR_ANY;
 	
 	bind(MY_UDP_SOCKET, (struct sockaddr*)&my_addr, sizeof(my_addr));
-	
 	while(ROUTERS.size() < ((unsigned int) MY_ROUTER_INFO.num_routers)) {
 		int sender_port;
 		tuple<struct router_node, vector<neighbor>> router_and_neighbors = receive_udp_router_node(&sender_port);
@@ -260,6 +260,8 @@ int main(int argc, char* argv[]) {
 	t_client.join();
 	
 	run_link_state_alg();
+	
+	// SEND MESSAGE TO MANAGER SAYING YOU ARE READY FOR COMMANDS
 	
 	print_network_to_file();
 
