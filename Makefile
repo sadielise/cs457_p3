@@ -1,7 +1,7 @@
 CXXFLAGS=-Wall -g -I.
 all: router manager
 router:router.o
-	g++ $(CXXFLAGS) router.o -o router
+	g++ $(CXXFLAGS) router.o -o router -lpthread
 manager:manager.o
 	g++ $(CXXFLAGS) manager.o -o manager
 router.o:router.cpp
