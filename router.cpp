@@ -261,6 +261,8 @@ int main(int argc, char* argv[]) {
 	
 	run_link_state_alg();
 	
+	// SEND MESSAGE TO MANAGER SAYING YOU ARE READY FOR COMMANDS
+	
 	print_network_to_file();
 
 	ROUTER_FILE.close();
