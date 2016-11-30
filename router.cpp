@@ -18,12 +18,19 @@ map<int, int> COSTS;
 map<int, int> PREVIOUS_STEP;
 
 void print_network_to_file() {
+	ROUTER_FILE << "--------------------NETWORK--------------------" << endl;
 	for(auto const& router : ROUTERS) {
 		ROUTER_FILE << "Router " << router.second.id << " UDP port: " << router.second.udp_port << endl;
 		ROUTER_FILE << "    Neighbors:"  << endl;
 		for(neighbor n : ROUTER_NEIGHBORS[router.second.id]) {
 			ROUTER_FILE << "    Neighbor ID: " << n.id << " cost: " << n.cost << " UDP port: " << n.udp_port << endl;
 		}
+	}
+	ROUTER_FILE << endl;
+	ROUTER_FILE << "--------------------ROUTING TABLE--------------------" << endl;
+	ROUTER_FILE << "ROUTER ID___COST____PREV ROUTER" << endl;
+	for(auto const& cost : COSTS) {
+		ROUTER_FILE << cost.first << "...................." << cost.second << ".............." << PREVIOUS_STEP[cost.first] << endl;
 	}
 }
 
@@ -149,6 +156,14 @@ void forward_my_router_info() {
 	forward_router_info(MY_ROUTER_INFO, ROUTER_NEIGHBORS[MY_ROUTER_INFO.id], 0, true);
 }
 
+void initialize_costs() {
+	for(int i = 0; i < MY_ROUTER_INFO.num_routers; i++) {
+		COSTS[i] = INT_MAX;
+	}
+	COSTS[MY_ROUTER_INFO.id] = 0;
+	PREVIOUS_STEP[MY_ROUTER_INFO.id] = MY_ROUTER_INFO.id;
+}
+
 int find_least_cost_unkown_router() {
 	int least_cost_router = INT_MAX;
 	int least_cost_router_id = -1;
@@ -164,6 +179,8 @@ int find_least_cost_unkown_router() {
 }
 
 void run_link_state_alg() {
+	initialize_costs();
+	
 	// assign own info for link state
 	KNOWN_ROUTERS.push_back(MY_ROUTER_INFO.id);
 	for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
@@ -172,10 +189,17 @@ void run_link_state_alg() {
 	}
 	
 	// find next least cost router and add it to known routers
-	int next_router = find_least_cost_unkown_router();
-	KNOWN_ROUTERS.push_back(next_router);
-	
-	// ask this router for its neighbors' information
+	while(KNOWN_ROUTERS.size() < ((unsigned int) MY_ROUTER_INFO.num_routers)) {
+		int next_router = find_least_cost_unkown_router();
+		KNOWN_ROUTERS.push_back(next_router);
+		
+		for(neighbor n : ROUTER_NEIGHBORS[next_router]) {
+			if(COSTS[n.id] > COSTS[next_router] + n.cost) {
+				COSTS[n.id] = COSTS[next_router] + n.cost;
+				PREVIOUS_STEP[n.id] = next_router;
+			}
+		}
+	}
 }
 
 void run_client(int port, const char* host) {
@@ -234,6 +258,8 @@ int main(int argc, char* argv[]) {
 	thread t_client(forward_my_router_info);
 	t_server.join();
 	t_client.join();
+	
+	run_link_state_alg();
 	
 	print_network_to_file();
 

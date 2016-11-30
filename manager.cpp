@@ -125,7 +125,7 @@ void connect_to_routers(int manager_socket){
 		
 		if(pid == 0) { // child process
 			system("./router");
-			cout << "FINISHED ROUTER" << endl;
+			cout << "ROUTER " << i << " FINISHED" << endl;
 			_exit(0);
 		} else if(pid > 0) { // parent_process
 			int accept_socket = accept_router_connection(manager_socket);
