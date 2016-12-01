@@ -94,19 +94,24 @@ tuple<struct router_node, vector<neighbor>> receive_udp_router_node(int* sender_
 	
 	struct router_node router_info;
 	recvfrom(MY_UDP_SOCKET, reinterpret_cast<char*>(&router_info), sizeof(router_info), 0, (struct sockaddr*)&sender_addr, &addrlen);
+	*sender_port = sender_addr.sin_port;
 	
 	struct packet_header pack_head;
 	recvfrom(MY_UDP_SOCKET, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0, (struct sockaddr*)&sender_addr, &addrlen);
-	
+	if(sender_addr.sin_port != *sender_port) {
+		cout << "SWITCH FROM: " << *sender_port << " TO: " << sender_addr.sin_port << endl;
+	}
 	vector<neighbor> router_neighbors;
 	
 	for(int i = 0; i < pack_head.num_neighbors; i++) {
 		struct neighbor n;
 		recvfrom(MY_UDP_SOCKET, reinterpret_cast<char*>(&n), sizeof(n), 0, (struct sockaddr*)&sender_addr, &addrlen);
+		if(sender_addr.sin_port != *sender_port) {
+			cout << "SWITCH FROM: " << *sender_port << " TO: " << sender_addr.sin_port << endl;
+		}
 		router_neighbors.push_back(n);
 	}
 	
-	*sender_port = sender_addr.sin_port;
 	return make_tuple(router_node(router_info.id, router_info.num_routers, router_info.udp_port), router_neighbors);
 }
 
@@ -141,8 +146,9 @@ void listen_and_forward_router_info() {
 	while(ROUTERS.size() < ((unsigned int) MY_ROUTER_INFO.num_routers)) {
 		int sender_port;
 		tuple<struct router_node, vector<neighbor>> router_and_neighbors = receive_udp_router_node(&sender_port);
-		
+		cout << MY_ROUTER_INFO.id << ": " << " Received Router: " << get<0>(router_and_neighbors).id << " via Router: " << sender_port << endl;
 		if(ROUTERS.find(get<0>(router_and_neighbors).id) == ROUTERS.end()) {
+			cout << MY_ROUTER_INFO.id << ": ADDING ROUTER: " << get<0>(router_and_neighbors).id << endl;
 			ROUTERS[get<0>(router_and_neighbors).id] = get<0>(router_and_neighbors);
 			ROUTER_NEIGHBORS[get<0>(router_and_neighbors).id] = get<1>(router_and_neighbors);
 			thread forward_info(forward_router_info, get<0>(router_and_neighbors), get<1>(router_and_neighbors), sender_port, false);
