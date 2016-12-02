@@ -56,8 +56,9 @@ vector<string> read_topology_file(string* filename){
 	ifstream file;
     file.open(*filename);
 	file >> NUM_NODES;
-	char tempArray[1];
-	file.getline(tempArray, 1);
+	
+	char connection[MAX_CONNECTION_LENGTH];
+	file.getline(connection, MAX_CONNECTION_LENGTH);
 	
 	create_routers();
 
@@ -69,6 +70,7 @@ vector<string> read_topology_file(string* filename){
 		if(connection[0] == '-'){ eof = true; }
 		else{
 			string line(connection);
+			trim(line);
 			vector<string> elements = split(line, ' ');
 			
 			int router_id = stoi(elements.at(0));
