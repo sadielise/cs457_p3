@@ -62,17 +62,36 @@ void receive_manager_packet(int accept_socket){
 	ROUTER_NEIGHBORS[MY_ROUTER_INFO.id] = neighbor_array_to_vector(MY_ROUTER_INFO.neighbors, MY_ROUTER_INFO.has_neighbor);
 	
 	if(DEBUG) {
-		cout << MY_ROUTER_INFO.id << ": Received router info. ID: " << MY_ROUTER_INFO.id << " UDP Port: " << MY_ROUTER_INFO.udp_port << " num neighbors: " << MY_ROUTER_INFO.num_neighbors << endl;
+		cout << MY_ROUTER_INFO.id << ": Received router info. ID: " << MY_ROUTER_INFO.id << ", UDP Port: " << MY_ROUTER_INFO.udp_port << ", Num Neighbors: " << MY_ROUTER_INFO.num_neighbors << endl;
 		cout << "My Neighbors: " << endl;
 		for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
 			cout << "    ID: " << n.id << " cost: " << n.cost << " UDP Port: " << n.udp_port << endl;
 		}
 		cout << endl;
 	}
+
+	ROUTER_FILE << "Received from manager: " << endl;
+	ROUTER_FILE << "\tID: " << MY_ROUTER_INFO.id << endl;
+	ROUTER_FILE << "\tUDP Port: " << MY_ROUTER_INFO.udp_port << endl;
+	ROUTER_FILE << "\tNum Neighbors: " << MY_ROUTER_INFO.num_neighbors << endl;
+	ROUTER_FILE << "\tMy Neighbors: " << endl;
+	for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
+			ROUTER_FILE << "\t\tID: " << n.id << " Cost: " << n.cost << " UDP Port: " << n.udp_port << endl;
+	}
+	ROUTER_FILE << endl;
 }
 
-void send_message_to_manager(int router_socket){
-	char message[] = "Hello manager! Nice to meet you! Can you pass along my routing information?";
+void send_hello_to_manager(int router_socket){
+	char message[] = "Hello manager!";
+	int send_result = send(router_socket, &message, sizeof(message), 0);
+	if(send_result == -1){
+		cout << "Error: Could not send message to manager." << endl;
+	}
+	ROUTER_FILE << "Sent to manager: " << message << endl << endl;
+}
+
+void send_ready_to_manager(int router_socket){
+	char message[] = "ready";
 	int send_result = send(router_socket, &message, sizeof(message), 0);
 	if(send_result == -1){
 		cout << "Error: Could not send message to manager." << endl;
@@ -212,7 +231,9 @@ void run_client(int port, const char* host) {
 		return;
 	}
 
-	send_message_to_manager(router_socket);
+	ROUTER_FILE << "Connected to manager" << endl << endl;
+
+	send_hello_to_manager(router_socket);
 	receive_manager_packet(router_socket);
 	
 	MANAGER_SOCKET = router_socket;
@@ -227,15 +248,17 @@ int main(int argc, char* argv[]) {
 	// handle signals
 	signal(SIGINT/SIGTERM/SIGKILL, sig_handler);
 	
-	// Get MY_ROUTER_INFO
-	run_client(PORT_NUMBER, "localhost");
-	populate_neighbor_addrs();
-	
 	// Create router file
-	string filename = to_string(MY_ROUTER_INFO.id) + ".out";
+	string filename = "router" + to_string(MY_ROUTER_INFO.id) + ".out";
 	remove(filename.c_str()); // clear the file if it already exists
 	ROUTER_FILE.open(filename.c_str(), ios::out | ios::app);
 	chmod(filename.c_str(), 0666);
+
+	ROUTER_FILE << "-----------------------ROUTER-----------------------" << endl << endl;
+	
+	// Get MY_ROUTER_INFO
+	run_client(PORT_NUMBER, "localhost");
+	populate_neighbor_addrs();
 	
 	// Listen and filter/forward packets
 	thread t_server(listen_and_forward_router_info);
@@ -243,10 +266,10 @@ int main(int argc, char* argv[]) {
 	t_server.join();
 	t_client.join();
 	
+	// Run link state algorithm and notify router when finished
 	run_link_state_alg();
-	
-	// SEND MESSAGE TO MANAGER SAYING YOU ARE READY FOR COMMANDS
-	
+	send_ready_to_manager(MANAGER_SOCKET);
+
 	print_network_to_file();
 
 	ROUTER_FILE.close();
