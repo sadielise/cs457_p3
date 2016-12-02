@@ -2,6 +2,8 @@
 
 int DEBUG = 1;
 
+int NUM_NODES = 0;
+
 ofstream ROUTER_FILE;
 
 int MY_UDP_SOCKET;
@@ -34,36 +36,39 @@ void print_network_to_file() {
 	}
 }
 
-void receive_manager_packet(int accept_socket){
-	struct router_node route;
-	int receive_result = recv(accept_socket, reinterpret_cast<char*>(&route), sizeof(route), 0);
-	if(receive_result == -1){
-		cout << "Error: Could not receive from manager." << endl;
+vector<neighbor> neighbor_array_to_vector(struct neighbor* n_array, bool* n_map) {
+	vector<struct neighbor> neighbor_vector;
+	
+	for(int i = 0; i < NUM_NODES; i++) {
+		if(n_map[i] == true) {
+			neighbor_vector.push_back(n_array[i]);
+		}
 	}
 	
+	return neighbor_vector;
+}
+
+void receive_manager_packet(int accept_socket){
 	struct packet_header pack_head;
 	recv(accept_socket, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0);
 	
-	vector<neighbor> r_neighbors;
+	NUM_NODES = pack_head.num_routers;
 	
-	for(int i = 0; i < pack_head.num_neighbors; i++) {
-		struct neighbor n;
-		recv(accept_socket, reinterpret_cast<char*>(&n), sizeof(n), 0);
-		r_neighbors.push_back(n);
-	}
+	struct router_node router;
+	recv(accept_socket, reinterpret_cast<char*>(&router), sizeof(router), 0);
 	
-	MY_ROUTER_INFO = router_node(route.id, route.num_routers, route.udp_port);
-	ROUTER_NEIGHBORS[MY_ROUTER_INFO.id] = r_neighbors;
+	MY_ROUTER_INFO = router;
+	ROUTERS[MY_ROUTER_INFO.id] = MY_ROUTER_INFO;
+	ROUTER_NEIGHBORS[MY_ROUTER_INFO.id] = neighbor_array_to_vector(MY_ROUTER_INFO.neighbors, MY_ROUTER_INFO.has_neighbor);
 	
 	if(DEBUG) {
-		cout << "Router Info ... ID: " << MY_ROUTER_INFO.id << " UDP Port: " << MY_ROUTER_INFO.udp_port << endl;
-		cout << "Neighbors (" << ROUTER_NEIGHBORS[MY_ROUTER_INFO.id].size() << ")..." << endl;
-		for(unsigned int i = 0; i < ROUTER_NEIGHBORS[MY_ROUTER_INFO.id].size(); i++) {
-			cout << "    Neighbor - ID: " << ROUTER_NEIGHBORS[MY_ROUTER_INFO.id].at(i).id << " Cost: " << ROUTER_NEIGHBORS[MY_ROUTER_INFO.id].at(i).cost << " UDP Port: " << ROUTER_NEIGHBORS[MY_ROUTER_INFO.id].at(i).udp_port << endl;
+		cout << MY_ROUTER_INFO.id << ": Received router info. ID: " << MY_ROUTER_INFO.id << " UDP Port: " << MY_ROUTER_INFO.udp_port << " num neighbors: " << MY_ROUTER_INFO.num_neighbors << endl;
+		cout << "My Neighbors: " << endl;
+		for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
+			cout << "    ID: " << n.id << " cost: " << n.cost << " UDP Port: " << n.udp_port << endl;
 		}
 		cout << endl;
 	}
-	
 }
 
 void send_message_to_manager(int router_socket){
@@ -87,42 +92,22 @@ void populate_neighbor_addrs() {
 	}
 }
 
-tuple<struct router_node, vector<neighbor>> receive_udp_router_node(int* sender_port) {
+struct router_node receive_udp_router_node(int* sender_port) {
 	struct sockaddr_in sender_addr;
 	socklen_t addrlen = sizeof(sender_addr);
 	
-	struct router_node router_info;
-	recvfrom(MY_UDP_SOCKET, reinterpret_cast<char*>(&router_info), sizeof(router_info), 0, (struct sockaddr*)&sender_addr, &addrlen);
-	
-	struct packet_header pack_head;
-	recvfrom(MY_UDP_SOCKET, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0, (struct sockaddr*)&sender_addr, &addrlen);
-	
-	vector<neighbor> router_neighbors;
-	
-	for(int i = 0; i < pack_head.num_neighbors; i++) {
-		struct neighbor n;
-		recvfrom(MY_UDP_SOCKET, reinterpret_cast<char*>(&n), sizeof(n), 0, (struct sockaddr*)&sender_addr, &addrlen);
-		router_neighbors.push_back(n);
-	}
-	
+	struct router_node router;
+	recvfrom(MY_UDP_SOCKET, reinterpret_cast<char*>(&router), sizeof(router), 0, (struct sockaddr*)&sender_addr, &addrlen);
 	*sender_port = sender_addr.sin_port;
-	return make_tuple(router_node(router_info.id, router_info.num_routers, router_info.udp_port), router_neighbors);
+	
+	return router;
 }
 
-void forward_router_info(struct router_node router_info, vector<neighbor> neighbors, int sender_port, bool broadcast) {
+void forward_router_info(struct router_node router_info, int sender_port, bool broadcast) {
 	for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
 		if(broadcast || n.udp_port != sender_port) {
 			struct sockaddr_in neighbor_addr = NEIGHBOR_ADDRS[n.id];
 			sendto(MY_UDP_SOCKET, reinterpret_cast<char*>(&router_info), sizeof(router_info), 0, (struct sockaddr*)&neighbor_addr, sizeof(neighbor_addr));
-			
-			struct packet_header pack_head;
-			pack_head.num_neighbors = neighbors.size();
-			sendto(MY_UDP_SOCKET, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0, (struct sockaddr*)&neighbor_addr, sizeof(neighbor_addr));
-			
-			for(unsigned int i = 0; i < neighbors.size(); i++) {
-				struct neighbor n = neighbors.at(i);
-				sendto(MY_UDP_SOCKET, reinterpret_cast<char*>(&n), sizeof(n), 0, (struct sockaddr*)&neighbor_addr, sizeof(neighbor_addr));
-			}
 		}
 	}
 }
@@ -138,14 +123,13 @@ void listen_and_forward_router_info() {
 	
 	bind(MY_UDP_SOCKET, (struct sockaddr*)&my_addr, sizeof(my_addr));
 	
-	while(ROUTERS.size() < ((unsigned int) MY_ROUTER_INFO.num_routers)) {
+	while(ROUTERS.size() < ((unsigned int) NUM_NODES)) {
 		int sender_port;
-		tuple<struct router_node, vector<neighbor>> router_and_neighbors = receive_udp_router_node(&sender_port);
-		
-		if(ROUTERS.find(get<0>(router_and_neighbors).id) == ROUTERS.end()) {
-			ROUTERS[get<0>(router_and_neighbors).id] = get<0>(router_and_neighbors);
-			ROUTER_NEIGHBORS[get<0>(router_and_neighbors).id] = get<1>(router_and_neighbors);
-			thread forward_info(forward_router_info, get<0>(router_and_neighbors), get<1>(router_and_neighbors), sender_port, false);
+		struct router_node router = receive_udp_router_node(&sender_port);
+		if(ROUTERS.find(router.id) == ROUTERS.end()) {
+			ROUTERS[router.id] = router;
+			ROUTER_NEIGHBORS[router.id] = neighbor_array_to_vector(router.neighbors, router.has_neighbor);
+			thread forward_info(forward_router_info, router, sender_port, false);
 			forward_info.join();
 		}
 	}
@@ -153,11 +137,11 @@ void listen_and_forward_router_info() {
 
 void forward_my_router_info() {
 	this_thread::sleep_for(chrono::milliseconds(3000));
-	forward_router_info(MY_ROUTER_INFO, ROUTER_NEIGHBORS[MY_ROUTER_INFO.id], 0, true);
+	forward_router_info(MY_ROUTER_INFO, 0, true);
 }
 
 void initialize_costs() {
-	for(int i = 0; i < MY_ROUTER_INFO.num_routers; i++) {
+	for(int i = 0; i < NUM_NODES; i++) {
 		COSTS[i] = INT_MAX;
 	}
 	COSTS[MY_ROUTER_INFO.id] = 0;
@@ -189,7 +173,7 @@ void run_link_state_alg() {
 	}
 	
 	// find next least cost router and add it to known routers
-	while(KNOWN_ROUTERS.size() < ((unsigned int) MY_ROUTER_INFO.num_routers)) {
+	while(KNOWN_ROUTERS.size() < ((unsigned int) NUM_NODES)) {
 		int next_router = find_least_cost_unkown_router();
 		KNOWN_ROUTERS.push_back(next_router);
 		
@@ -260,6 +244,8 @@ int main(int argc, char* argv[]) {
 	t_client.join();
 	
 	run_link_state_alg();
+	
+	// SEND MESSAGE TO MANAGER SAYING YOU ARE READY FOR COMMANDS
 	
 	print_network_to_file();
 
