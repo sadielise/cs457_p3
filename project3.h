@@ -38,7 +38,7 @@ using namespace boost;
 #define BASE_UDP_PORT 40000
 
 struct packet_header {
-	int num_neighbors;
+	int num_routers;
 };
 
 struct packet{
@@ -59,12 +59,14 @@ struct neighbor {
 
 struct router_node {
 	int id;
-	int num_routers;
+	int num_neighbors;
 	int udp_port;
+	struct neighbor neighbors[100];
+	bool has_neighbor[100] = {false};
 	router_node(){}
-	router_node(int _id, int _num_routers, int _udp_port) {
+	router_node(int _id, int _num_neighbors, int _udp_port) {
 		id = _id;
-		num_routers = _num_routers;
+		num_neighbors = _num_neighbors;
 		udp_port = _udp_port;
 	}
 };
