@@ -15,6 +15,16 @@ int print_help_message() {
     return -1;
 }
 
+void copy_neighbors_to_routers() {
+	for(auto const& neighbor_map : ROUTER_NEIGHBORS) {
+		for(neighbor n : neighbor_map.second) {
+			ROUTERS[neighbor_map.first].neighbors[n.id] = n;
+			ROUTERS[neighbor_map.first].has_neighbor[n.id] = true;
+		}
+		ROUTERS[neighbor_map.first].num_neighbors = neighbor_map.second.size();
+	}
+}
+
 vector<string> split(const string &s, char delim) {
     stringstream ss(s);
     string item;
@@ -29,7 +39,6 @@ void create_routers() {
 	for(int i = 0; i < NUM_NODES; i++) {
 		struct router_node new_router = {};
 		new_router.id = i;
-		new_router.num_routers = NUM_NODES;
 		new_router.udp_port = BASE_UDP_PORT + i; // All UDP ports = BASE_UDP_PORT + router id
 		ROUTERS[i] = new_router;
 	}
@@ -73,6 +82,8 @@ vector<string> read_topology_file(string* filename){
 		}
 	}
 	
+	copy_neighbors_to_routers();
+	
 	return topology;
 }
 
@@ -87,20 +98,12 @@ void receive_router_packet(int accept_socket, int i){
 }
 
 void send_message_to_router(int accept_socket, int router_id){
-	struct router_node r = ROUTERS[router_id];
-	int send_result = send(accept_socket, reinterpret_cast<char*>(&r), sizeof(r), 0);
-	if(send_result == -1){
-		cout << "Error: Could not send data to router." << endl;
-	}
-	
 	struct packet_header pack_head = {};
-	pack_head.num_neighbors = ROUTER_NEIGHBORS[r.id].size();
+	pack_head.num_routers = NUM_NODES;
 	send(accept_socket, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0);
 	
-	for(unsigned int i = 0; i < ROUTER_NEIGHBORS[r.id].size(); i++) {
-		struct neighbor n = ROUTER_NEIGHBORS[r.id].at(i);
-		send(accept_socket, reinterpret_cast<char*>(&n), sizeof(n), 0);
-	}
+	struct router_node r = ROUTERS[router_id];
+	send(accept_socket, reinterpret_cast<char*>(&r), sizeof(r), 0);
 }
 
 int accept_router_connection(int manager_socket){

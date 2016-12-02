@@ -13,8 +13,8 @@ Router 2 UDP port: 40002
     Neighbor ID: 3 cost: 50 UDP port: 40003
 Router 3 UDP port: 40003
     Neighbors:
-    Neighbor ID: 2 cost: 50 UDP port: 40002
     Neighbor ID: 1 cost: 30 UDP port: 40001
+    Neighbor ID: 2 cost: 50 UDP port: 40002
 
 --------------------ROUTING TABLE--------------------
 ROUTER ID___COST____PREV ROUTER

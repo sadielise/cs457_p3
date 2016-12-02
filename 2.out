@@ -1,0 +1,24 @@
+--------------------NETWORK--------------------
+Router 0 UDP port: 40000
+    Neighbors:
+    Neighbor ID: 1 cost: 20 UDP port: 40001
+    Neighbor ID: 2 cost: 10 UDP port: 40002
+Router 1 UDP port: 40001
+    Neighbors:
+    Neighbor ID: 0 cost: 20 UDP port: 40000
+    Neighbor ID: 3 cost: 30 UDP port: 40003
+Router 2 UDP port: 40002
+    Neighbors:
+    Neighbor ID: 0 cost: 10 UDP port: 40000
+    Neighbor ID: 3 cost: 50 UDP port: 40003
+Router 3 UDP port: 40003
+    Neighbors:
+    Neighbor ID: 1 cost: 30 UDP port: 40001
+    Neighbor ID: 2 cost: 50 UDP port: 40002
+
+--------------------ROUTING TABLE--------------------
+ROUTER ID___COST____PREV ROUTER
+0....................10..............2
+1....................30..............0
+2....................0..............2
+3....................50..............2
