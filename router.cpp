@@ -42,13 +42,11 @@ void print_routing_table_to_file(){
 
 vector<neighbor> neighbor_array_to_vector(struct neighbor* n_array, bool* n_map) {
 	vector<struct neighbor> neighbor_vector;
-	
 	for(int i = 0; i < NUM_NODES; i++) {
 		if(n_map[i] == true) {
 			neighbor_vector.push_back(n_array[i]);
 		}
 	}
-	
 	return neighbor_vector;
 }
 
@@ -59,14 +57,14 @@ void receive_instructions(){
 	cout << "Receiving instructions..." << endl;
 }	
 
-void receive_manager_packet(int accept_socket){
+void receive_manager_packet(){
 	struct packet_header pack_head;
-	recv(accept_socket, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0);
+	recv(MANAGER_SOCKET, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0);
 	
 	NUM_NODES = pack_head.num_routers;
 	
 	struct router_node router;
-	recv(accept_socket, reinterpret_cast<char*>(&router), sizeof(router), 0);
+	recv(MANAGER_SOCKET, reinterpret_cast<char*>(&router), sizeof(router), 0);
 	
 	MY_ROUTER_INFO = router;
 	ROUTERS[MY_ROUTER_INFO.id] = MY_ROUTER_INFO;
@@ -80,30 +78,19 @@ void receive_manager_packet(int accept_socket){
 		}
 		cout << endl;
 	}
-
-	ROUTER_FILE << "Received from manager: " << endl;
-	ROUTER_FILE << "\tID: " << MY_ROUTER_INFO.id << endl;
-	ROUTER_FILE << "\tUDP Port: " << MY_ROUTER_INFO.udp_port << endl;
-	ROUTER_FILE << "\tNum Neighbors: " << MY_ROUTER_INFO.num_neighbors << endl;
-	ROUTER_FILE << "\tMy Neighbors: " << endl;
-	for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
-			ROUTER_FILE << "\tID: " << n.id << " Cost: " << n.cost << " UDP Port: " << n.udp_port << endl;
-	}
-	ROUTER_FILE << endl;
 }
 
-void send_hello_to_manager(int router_socket){
+void send_hello_to_manager(){
 	char message[] = "Hello manager!";
-	int send_result = send(router_socket, &message, sizeof(message), 0);
+	int send_result = send(MANAGER_SOCKET, &message, sizeof(message), 0);
 	if(send_result == -1){
 		cout << "Error: Could not send message to manager." << endl;
 	}
-	ROUTER_FILE << "Sent to manager: " << message << endl << endl;
 }
 
-void send_ready_to_manager(int router_socket){
+void send_ready_to_manager(){
 	char message[] = "ready";
-	int send_result = send(router_socket, &message, sizeof(message), 0);
+	int send_result = send(MANAGER_SOCKET, &message, sizeof(message), 0);
 	if(send_result == -1){
 		cout << "Error: Could not send message to manager." << endl;
 	}
@@ -131,6 +118,8 @@ struct router_node receive_udp_router_node(int* sender_port) {
 	recvfrom(MY_UDP_SOCKET, reinterpret_cast<char*>(&router), sizeof(router), 0, (struct sockaddr*)&sender_addr, &addrlen);
 	*sender_port = sender_addr.sin_port;
 	
+	ROUTER_FILE << "Received router info from router " << router.id << endl;
+	
 	return router;
 }
 
@@ -139,6 +128,7 @@ void forward_router_info(struct router_node router_info, int sender_port, bool b
 		if(broadcast || n.udp_port != sender_port) {
 			struct sockaddr_in neighbor_addr = NEIGHBOR_ADDRS[n.id];
 			sendto(MY_UDP_SOCKET, reinterpret_cast<char*>(&router_info), sizeof(router_info), 0, (struct sockaddr*)&neighbor_addr, sizeof(neighbor_addr));
+			ROUTER_FILE << "Send router info to router " << n.id << endl;
 		}
 	}
 }
@@ -179,7 +169,7 @@ void initialize_costs() {
 	PREVIOUS_STEP[MY_ROUTER_INFO.id] = MY_ROUTER_INFO.id;
 }
 
-int find_least_cost_unkown_router() {
+int find_least_cost_unknown_router() {
 	int least_cost_router = INT_MAX;
 	int least_cost_router_id = -1;
 	
@@ -194,7 +184,7 @@ int find_least_cost_unkown_router() {
 }
 
 void run_link_state_alg() {
-	ROUTER_FILE << "Running link state algorithm..." << endl;
+	ROUTER_FILE << endl << "Running link state algorithm..." << endl;
 	initialize_costs();
 	
 	// assign own info for link state
@@ -206,7 +196,7 @@ void run_link_state_alg() {
 	
 	// find next least cost router and add it to known routers
 	while(KNOWN_ROUTERS.size() < ((unsigned int) NUM_NODES)) {
-		int next_router = find_least_cost_unkown_router();
+		int next_router = find_least_cost_unknown_router();
 		KNOWN_ROUTERS.push_back(next_router);
 		
 		for(neighbor n : ROUTER_NEIGHBORS[next_router]) {
@@ -221,8 +211,8 @@ void run_link_state_alg() {
 void run_client(int port, const char* host) {
 	struct sockaddr_in router_address = {};
 
-	int router_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if(router_socket == -1){
+	MANAGER_SOCKET = socket(AF_INET, SOCK_STREAM, 0);
+	if(MANAGER_SOCKET == -1){
 		cout << "Error: Could not create server socket." << endl;
 		return;
 	}
@@ -237,19 +227,15 @@ void run_client(int port, const char* host) {
 	router_address.sin_port = htons(PORT_NUMBER); //convert and set port
 	router_address.sin_addr.s_addr = INADDR_ANY;
 
-	int connect_result = connect(router_socket, (struct sockaddr*)&router_address, sizeof(router_address));
+	int connect_result = connect(MANAGER_SOCKET, (struct sockaddr*)&router_address, sizeof(router_address));
 	if(connect_result == -1){
-		close(router_socket);			
+		close(MANAGER_SOCKET);			
 		cout << "Error: Could not connect to manager" << endl;
 		return;
 	}
 
-	ROUTER_FILE << "Connected to manager" << endl << endl;
-
-	send_hello_to_manager(router_socket);
-	receive_manager_packet(router_socket);
-	
-	MANAGER_SOCKET = router_socket;
+	send_hello_to_manager();
+	receive_manager_packet();
 }
 
 void create_router_file(){
@@ -258,6 +244,17 @@ void create_router_file(){
 	ROUTER_FILE.open(filename.c_str(), ios::out | ios::app);
 	chmod(filename.c_str(), 0666);
 	ROUTER_FILE << "-----------------------ROUTER-----------------------" << endl << endl;
+	ROUTER_FILE << "Connected to manager" << endl << endl;
+	ROUTER_FILE << "Sent to manager: " << "Hello manager!" << endl << endl;
+	ROUTER_FILE << "Received from manager: " << endl;
+	ROUTER_FILE << "\tID: " << MY_ROUTER_INFO.id << endl;
+	ROUTER_FILE << "\tUDP Port: " << MY_ROUTER_INFO.udp_port << endl;
+	ROUTER_FILE << "\tNum Neighbors: " << MY_ROUTER_INFO.num_neighbors << endl;
+	ROUTER_FILE << "\tMy Neighbors: " << endl;
+	for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
+			ROUTER_FILE << "\tID: " << n.id << " Cost: " << n.cost << " UDP Port: " << n.udp_port << endl;
+	}
+	ROUTER_FILE << endl;
 }
 
 void sig_handler(int signal){
@@ -282,7 +279,7 @@ int main(int argc, char* argv[]) {
 	// Run link state algorithm and notify router when finished
 	run_link_state_alg();
 	print_routing_table_to_file();
-	send_ready_to_manager(MANAGER_SOCKET);
+	send_ready_to_manager();
 	receive_instructions();
 
 	ROUTER_FILE.close();

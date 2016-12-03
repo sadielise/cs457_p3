@@ -159,7 +159,6 @@ void confirm_router_ready(int i){
 		if(DEBUG){ cout << "Router " << i << " ready" << endl; }
 		MANAGER_FILE << "Received from router " << i << ": ready" << endl;
 	}
-	MANAGER_FILE << endl;
 }
 
 void send_instruction_to_router(int source_id, string destination_id){
@@ -173,7 +172,7 @@ void send_instruction_to_router(int source_id, string destination_id){
 
 void send_router_instructions(){
 
-	MANAGER_FILE << "Sending instructions to routers..." << endl << endl;
+	MANAGER_FILE << endl << "Sending instructions to routers..." << endl << endl;
 	bool end_of_instructions = false;
 	int instruction_number = 0;
 	while(end_of_instructions == false){
@@ -188,10 +187,8 @@ void send_router_instructions(){
 			string destination_id = elements.at(1);
 			instruction_number = instruction_number + 1;
 			send_instruction_to_router(source_id, destination_id);
-
 			if(DEBUG){ cout << "Instruction " << instruction_number << ": " << source_id << " " << destination_id << endl; }
-			MANAGER_FILE << "Sent instruction to router " << source_id << ": " << "destination " << destination_id << endl;
-			
+			MANAGER_FILE << "Sent instruction to router " << source_id << ": " << destination_id << endl;
 		}
 	}
 }
@@ -287,8 +284,6 @@ int main(int argc, char* argv[]) {
 	// connect to and run routers
 	connect_to_routers(MANAGER_SOCKET);
 
-	// send instructions to routers
-	
 	int status;
 	int tempN = NUM_NODES;
 	while(tempN > 0){

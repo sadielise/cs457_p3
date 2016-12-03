@@ -1,5 +1,53 @@
 -----------------------ROUTER-----------------------
 
+Connected to manager
+
+Sent to manager: Hello manager!
+
+Received from manager: 
+	ID: 0
+	UDP Port: 40000
+	Num Neighbors: 3
+	My Neighbors: 
+	ID: 2 Cost: 40 UDP Port: 40002
+	ID: 4 Cost: 60 UDP Port: 40004
+	ID: 9 Cost: 40 UDP Port: 40009
+
+Send router info to router 2
+Send router info to router 4
+Send router info to router 9
+Received router info from router 1
+Send router info to router 2
+Send router info to router 4
+Received router info from router 2
+Send router info to router 4
+Send router info to router 9
+Received router info from router 3
+Send router info to router 2
+Send router info to router 4
+Received router info from router 3
+Received router info from router 4
+Send router info to router 2
+Send router info to router 9
+Received router info from router 5
+Send router info to router 2
+Send router info to router 4
+Received router info from router 5
+Received router info from router 6
+Send router info to router 4
+Send router info to router 9
+Received router info from router 6
+Received router info from router 7
+Send router info to router 2
+Send router info to router 9
+Received router info from router 7
+Received router info from router 8
+Send router info to router 2
+Send router info to router 4
+Received router info from router 9
+Send router info to router 2
+Send router info to router 4
+
 Running link state algorithm...
 
 Routing table:
