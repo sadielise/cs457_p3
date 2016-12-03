@@ -1,0 +1,18 @@
+-----------------------ROUTER-----------------------
+
+Running link state algorithm...
+
+Routing table:
+ID	COST	NEXT HOP
+0	100	4
+1	280	8
+2	70	6
+3	160	9
+4	40	6
+5	150	7
+6	0	6
+7	110	4
+8	210	9
+9	140	0
+
+Received instruction from manager: 7

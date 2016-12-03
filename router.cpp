@@ -28,12 +28,16 @@ void print_network_to_file() {
 			ROUTER_FILE << "    Neighbor ID: " << n.id << " cost: " << n.cost << " UDP port: " << n.udp_port << endl;
 		}
 	}
+}
+
+void print_routing_table_to_file(){
 	ROUTER_FILE << endl;
-	ROUTER_FILE << "--------------------ROUTING TABLE--------------------" << endl;
-	ROUTER_FILE << "ROUTER ID___COST____PREV ROUTER" << endl;
+	ROUTER_FILE << "Routing table:" << endl;
+	ROUTER_FILE << "ID\tCOST\tNEXT HOP" << endl;
 	for(auto const& cost : COSTS) {
-		ROUTER_FILE << cost.first << "...................." << cost.second << ".............." << PREVIOUS_STEP[cost.first] << endl;
+		ROUTER_FILE << cost.first << "\t" << cost.second << "\t" << PREVIOUS_STEP[cost.first] << endl;
 	}
+	ROUTER_FILE << endl;
 }
 
 vector<neighbor> neighbor_array_to_vector(struct neighbor* n_array, bool* n_map) {
@@ -47,6 +51,13 @@ vector<neighbor> neighbor_array_to_vector(struct neighbor* n_array, bool* n_map)
 	
 	return neighbor_vector;
 }
+
+void receive_instructions(){
+	struct packet instruction;
+	recv(MANAGER_SOCKET, reinterpret_cast<char*>(&instruction), sizeof(instruction), 0);
+	ROUTER_FILE << "Received instruction from manager: " << instruction.message << endl;
+	cout << "Receiving instructions..." << endl;
+}	
 
 void receive_manager_packet(int accept_socket){
 	struct packet_header pack_head;
@@ -76,7 +87,7 @@ void receive_manager_packet(int accept_socket){
 	ROUTER_FILE << "\tNum Neighbors: " << MY_ROUTER_INFO.num_neighbors << endl;
 	ROUTER_FILE << "\tMy Neighbors: " << endl;
 	for(neighbor n : ROUTER_NEIGHBORS[MY_ROUTER_INFO.id]) {
-			ROUTER_FILE << "\t\tID: " << n.id << " Cost: " << n.cost << " UDP Port: " << n.udp_port << endl;
+			ROUTER_FILE << "\tID: " << n.id << " Cost: " << n.cost << " UDP Port: " << n.udp_port << endl;
 	}
 	ROUTER_FILE << endl;
 }
@@ -96,6 +107,7 @@ void send_ready_to_manager(int router_socket){
 	if(send_result == -1){
 		cout << "Error: Could not send message to manager." << endl;
 	}
+	cout << "Sent ready to manager" << endl;
 }
 
 void populate_neighbor_addrs() {
@@ -182,6 +194,7 @@ int find_least_cost_unkown_router() {
 }
 
 void run_link_state_alg() {
+	ROUTER_FILE << "Running link state algorithm..." << endl;
 	initialize_costs();
 	
 	// assign own info for link state
@@ -239,6 +252,14 @@ void run_client(int port, const char* host) {
 	MANAGER_SOCKET = router_socket;
 }
 
+void create_router_file(){
+	string filename = "router" + to_string(MY_ROUTER_INFO.id) + ".out";
+	remove(filename.c_str()); // clear the file if it already exists
+	ROUTER_FILE.open(filename.c_str(), ios::out | ios::app);
+	chmod(filename.c_str(), 0666);
+	ROUTER_FILE << "-----------------------ROUTER-----------------------" << endl << endl;
+}
+
 void sig_handler(int signal){
 	exit(0);
 }
@@ -247,17 +268,9 @@ int main(int argc, char* argv[]) {
 
 	// handle signals
 	signal(SIGINT/SIGTERM/SIGKILL, sig_handler);
-	
-	// Create router file
-	string filename = "router" + to_string(MY_ROUTER_INFO.id) + ".out";
-	remove(filename.c_str()); // clear the file if it already exists
-	ROUTER_FILE.open(filename.c_str(), ios::out | ios::app);
-	chmod(filename.c_str(), 0666);
 
-	ROUTER_FILE << "-----------------------ROUTER-----------------------" << endl << endl;
-	
-	// Get MY_ROUTER_INFO
 	run_client(PORT_NUMBER, "localhost");
+	create_router_file();
 	populate_neighbor_addrs();
 	
 	// Listen and filter/forward packets
@@ -268,10 +281,10 @@ int main(int argc, char* argv[]) {
 	
 	// Run link state algorithm and notify router when finished
 	run_link_state_alg();
+	print_routing_table_to_file();
 	send_ready_to_manager(MANAGER_SOCKET);
-
-	print_network_to_file();
+	receive_instructions();
 
 	ROUTER_FILE.close();
-    return 0;
+  return 0;
 }

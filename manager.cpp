@@ -3,6 +3,7 @@
 int NUM_NODES = 0;
 int DEBUG = 1;
 int MAX_CONNECTION_LENGTH = 8;
+int MANAGER_SOCKET;
 vector<int> ROUTER_SOCKETS;
 map<int, struct router_node> ROUTERS;
 map<int, vector<neighbor>> ROUTER_NEIGHBORS;
@@ -153,45 +154,19 @@ void close_router_connections(){
 	}
 }
 
-void confirm_routers_ready(int manager_socket){
-	MANAGER_FILE << "Checking if routers are ready..." << endl << endl;
-	for(int i = 0; i < NUM_NODES; i++){
-		if(receive_ready_packet(ROUTER_SOCKETS.at(i)) == true){
-			if(DEBUG){ cout << "Router " << i << " ready" << endl; }
-			MANAGER_FILE << "Received from router " << i << ": ready" << endl;
-		}
+void confirm_router_ready(int i){
+	if(receive_ready_packet(ROUTER_SOCKETS.at(i)) == true){
+		if(DEBUG){ cout << "Router " << i << " ready" << endl; }
+		MANAGER_FILE << "Received from router " << i << ": ready" << endl;
 	}
 	MANAGER_FILE << endl;
-}
-
-void connect_to_routers(int manager_socket){
-	for(int i = 0; i < NUM_NODES; i++){
-		pid_t pid = fork();
-		
-		if(pid == 0) { // child process
-			system("./router");
-			_exit(0);
-		} else if(pid > 0) { // parent_process
-			int accept_socket = accept_router_connection(manager_socket);
-			if(accept_socket == -1) return;
-			MANAGER_FILE << "Connected to router " << i << endl;
-			ROUTER_SOCKETS.push_back(accept_socket);
-			receive_router_packet(accept_socket, i);
-			send_message_to_router(accept_socket, i);
-		} else {
-			cout << "fork failed" << endl;
-			exit(-1);
-		}
-	}
-	confirm_routers_ready(manager_socket);
 }
 
 void send_instruction_to_router(int source_id, string destination_id){
 	int source_socket = ROUTER_SOCKETS.at(source_id);
 	struct packet instruction = {};
-	string msg = "destination " + destination_id;
 	for(unsigned int i = 0; i < destination_id.size(); i++){
-		instruction.message[i] = msg.at(i);
+		instruction.message[i] = destination_id.at(i);
 	}
 	send(source_socket, reinterpret_cast<char*>(&instruction), sizeof(instruction), 0);
 }
@@ -219,6 +194,34 @@ void send_router_instructions(){
 			
 		}
 	}
+}
+
+void connect_to_routers(int manager_socket){
+	pid_t pid;
+	for(int i = 0; i < NUM_NODES; i++){
+		pid = fork();
+		
+		if(pid == 0) { // child process
+			system("./router");
+			_exit(0);
+		} else if(pid > 0) { // parent_process
+			int accept_socket = accept_router_connection(manager_socket);
+			if(accept_socket == -1) return;
+			MANAGER_FILE << "Connected to router " << i << endl;
+			ROUTER_SOCKETS.push_back(accept_socket);
+			receive_router_packet(accept_socket, i);
+			send_message_to_router(accept_socket, i);
+		} else {
+			cout << "fork failed" << endl;
+			exit(-1);
+		}
+	}
+
+	for(int i = 0; i < NUM_NODES; i++){
+		confirm_router_ready(i);
+	}
+	
+	send_router_instructions();
 }
 
 int start_listening()
@@ -279,13 +282,12 @@ int main(int argc, char* argv[]) {
 	print_topology_to_file(NUM_NODES, &topology);
 
 	// start listening for routers
-	int manager_router = start_listening();
+	MANAGER_SOCKET = start_listening();
 
 	// connect to and run routers
-	connect_to_routers(manager_router);
+	connect_to_routers(MANAGER_SOCKET);
 
 	// send instructions to routers
-	send_router_instructions();
 	
 	int status;
 	int tempN = NUM_NODES;
@@ -294,11 +296,14 @@ int main(int argc, char* argv[]) {
 		tempN--;
 	}
 
+	// close manager file
+	MANAGER_FILE.close();
+
 	// close router connections
 	close_router_connections();
 	
 	// close manager 
-	close(manager_router);
+	close(MANAGER_SOCKET);
 	
   exit(0);
 }

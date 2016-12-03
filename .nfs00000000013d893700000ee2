@@ -1,0 +1,28 @@
+-----------------------MANAGER-----------------------
+
+Number of nodes: 10
+0 9 40
+0 4 60
+0 2 40
+1 8 70
+2 6 70
+3 9 20
+3 8 70
+3 5 70
+4 7 70
+4 6 40
+5 9 70
+5 7 40
+7 9 60
+8 9 70
+
+Listening for routers...
+
+Connected to router 0
+Received from router 0: Hello manager!
+Sent topology to router 0
+
+Connected to router 1
+Received from router 1: Hello manager!
+Sent topology to router 1
+

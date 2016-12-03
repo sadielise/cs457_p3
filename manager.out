@@ -1,0 +1,92 @@
+-----------------------MANAGER-----------------------
+
+Number of nodes: 10
+0 9 40
+0 4 60
+0 2 40
+1 8 70
+2 6 70
+3 9 20
+3 8 70
+3 5 70
+4 7 70
+4 6 40
+5 9 70
+5 7 40
+7 9 60
+8 9 70
+
+Listening for routers...
+
+Connected to router 0
+Received from router 0: Hello manager!
+Sent topology to router 0
+
+Connected to router 1
+Received from router 1: Hello manager!
+Sent topology to router 1
+
+Connected to router 2
+Received from router 2: Hello manager!
+Sent topology to router 2
+
+Connected to router 3
+Received from router 3: Hello manager!
+Sent topology to router 3
+
+Connected to router 4
+Received from router 4: Hello manager!
+Sent topology to router 4
+
+Connected to router 5
+Received from router 5: Hello manager!
+Sent topology to router 5
+
+Connected to router 6
+Received from router 6: Hello manager!
+Sent topology to router 6
+
+Connected to router 7
+Received from router 7: Hello manager!
+Sent topology to router 7
+
+Connected to router 8
+Received from router 8: Hello manager!
+Sent topology to router 8
+
+Connected to router 9
+Received from router 9: Hello manager!
+Sent topology to router 9
+
+Received from router 0: ready
+
+Received from router 1: ready
+
+Received from router 2: ready
+
+Received from router 3: ready
+
+Received from router 4: ready
+
+Received from router 5: ready
+
+Received from router 6: ready
+
+Received from router 7: ready
+
+Received from router 8: ready
+
+Received from router 9: ready
+
+Sending instructions to routers...
+
+Sent instruction to router 0: destination 1
+Sent instruction to router 1: destination 2
+Sent instruction to router 2: destination 3
+Sent instruction to router 3: destination 4
+Sent instruction to router 4: destination 5
+Sent instruction to router 5: destination 6
+Sent instruction to router 6: destination 7
+Sent instruction to router 7: destination 8
+Sent instruction to router 8: destination 9
+Sent instruction to router 9: destination 0
