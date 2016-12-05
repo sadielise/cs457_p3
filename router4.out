@@ -1,0 +1,72 @@
+-----------------------ROUTER-----------------------
+
+Connected to manager
+
+Sent to manager: Hello manager!
+
+Received from manager: 
+	ID: 4
+	UDP Port: 40004
+	Num Neighbors: 3
+	My Neighbors: 
+	ID: 1 Cost: 2 UDP Port: 40001
+	ID: 2 Cost: 1 UDP Port: 40002
+	ID: 3 Cost: 2 UDP Port: 40003
+
+Received router info from router 0
+Send router info to router 1
+Send router info to router 2
+Received router info from router 0
+Received router info from router 1
+Send router info to router 2
+Send router info to router 3
+Received router info from router 2
+Send router info to router 1
+Send router info to router 3
+Received router info from router 2
+Received router info from router 3
+Send router info to router 1
+Send router info to router 2
+Received router info from router 3
+Send router info to router 1
+Send router info to router 2
+Send router info to router 3
+Received router info from router 5
+Send router info to router 1
+Send router info to router 3
+
+Running link state algorithm...
+
+Routing table:
+ID	COST	NEXT HOP
+0	4	2
+1	2	1
+2	1	2
+3	2	3
+4	0	4
+5	7	2
+
+Time: Sun Dec  4 23:58:26 2016
+ Received packet from router: send packet to router 1
+Time: Sun Dec  4 23:58:26 2016
+ Sent packet to router 1: send packet to router 1
+Time: Sun Dec  4 23:58:31 2016
+ Received packet from router: send packet to router 2
+Time: Sun Dec  4 23:58:31 2016
+ Sent packet to router 2: send packet to router 2
+Time: Sun Dec  4 23:58:36 2016
+ Received packet from router: send packet to router 3
+Time: Sun Dec  4 23:58:36 2016
+ Sent packet to router 3: send packet to router 3
+Time: Sun Dec  4 23:58:41 2016
+ Received packet from router: send packet to router 4
+Packet destination reached
+Time: Sun Dec  4 23:58:46 2016
+ Received from manager: send packet to router 5
+Time: Sun Dec  4 23:58:46 2016
+ Sent packet to router 2: send packet to router 5
+Time: Sun Dec  4 23:59:06 2016
+ Received from manager: Quit
+
+Exiting router...
+

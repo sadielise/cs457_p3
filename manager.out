@@ -1,0 +1,48 @@
+-----------------------MANAGER-----------------------
+
+Time 01:28:58:688	Topology: 
+			SOURCE	DEST	COST
+			0	1	1	
+			0	2	5	
+			1	2	3	
+			2	3	2	
+
+Time 01:28:58:688	Listening for routers...
+
+Time 01:28:58:688	Starting router 0...
+Time 01:28:58:694	Connected to router 0
+Time 01:28:58:694	Received from router 0: Hello manager!
+Time 01:28:58:695	Sent topology to router 0
+
+Time 01:28:58:695	Starting router 1...
+Time 01:28:58:701	Connected to router 1
+Time 01:28:58:701	Received from router 1: Hello manager!
+Time 01:28:58:701	Sent topology to router 1
+
+Time 01:28:58:701	Starting router 2...
+Time 01:28:58:707	Connected to router 2
+Time 01:28:58:707	Received from router 2: Hello manager!
+Time 01:28:58:707	Sent topology to router 2
+
+Time 01:28:58:707	Starting router 3...
+Time 01:28:58:713	Connected to router 3
+Time 01:28:58:713	Received from router 3: Hello manager!
+Time 01:28:58:713	Sent topology to router 3
+
+Time 01:29:01:717	Received from router 0: ready
+Time 01:29:01:718	Received from router 1: ready
+Time 01:29:01:718	Received from router 2: ready
+Time 01:29:01:718	Received from router 3: ready
+
+Time 01:29:01:718	Sending instructions to routers...
+
+Time 01:29:01:718	Sent message to router 0: send packet to router 3
+Time 01:29:06:718	Sent message to router 2: send packet to router 1
+
+Time 01:29:21:719	Sent quit to router 0
+Time 01:29:21:719	Sent quit to router 1
+Time 01:29:21:719	Sent quit to router 2
+Time 01:29:21:719	Sent quit to router 3
+
+Time 01:29:21:724	Exiting manager...
+

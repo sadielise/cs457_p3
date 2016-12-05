@@ -1,0 +1,33 @@
+-----------------------ROUTER-----------------------
+
+Time 01:28:58:716	Connected to manager
+
+Time 01:28:58:716	Sent to manager: Hello manager!
+
+Time 01:28:58:716	Received from manager: 
+			ID: 3
+			UDP Port: 40003
+			Num Neighbors: 1
+			My Neighbors: 
+			ID: 2 Cost: 2 UDP Port: 40002
+
+Time 01:29:01:698	Received router info from router 0
+Time 01:29:01:705	Received router info from router 1
+Time 01:29:01:710	Received router info from router 2
+Time 01:29:01:717	Send router info to router 2
+
+Time 01:29:01:717	Running link state algorithm...
+
+Time 01:29:01:717	Routing table:
+			ID	COST	NEXT HOP
+			0	6	2
+			1	5	2
+			2	2	2
+			3	0	3
+
+Time 01:29:01:719	Received packet from router 2: send packet to router 3
+Time 01:29:01:719	Packet destination reached
+Time 01:29:21:719	Received from manager: Quit
+
+Time 01:29:21:720	Exiting router...
+

@@ -28,23 +28,41 @@
 #include <chrono>
 #include <thread>
 #include <tuple>
+#include <chrono>
+#include <ctime>
+#include <sys/time.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace std;
 using namespace boost;
+using namespace boost::posix_time;
 
 #define PORT_NUMBER 20003
 #define MESSAGE_SIZE 140
 #define VERSION 457
 #define BASE_UDP_PORT 40000
 
+/* This struct is used to send the number of
+nodes to a router */
 struct packet_header {
 	int num_routers;
 };
 
+/* This struct is used to send basic messages
+between manager/router */
 struct packet{
 	char message[MESSAGE_SIZE];
 };
 
+/* This struct is used to send messages between
+routers */
+struct router_packet{
+	int source_id;
+	char message[MESSAGE_SIZE];
+};
+
+/* This struct is used by routers to store
+neighbor information */
 struct neighbor {
 	int id;
 	int cost;
@@ -57,6 +75,8 @@ struct neighbor {
 	}
 };
 
+/* This struct is used to pass router information
+from manager to router and from router to router */
 struct router_node {
 	int id;
 	int num_neighbors;

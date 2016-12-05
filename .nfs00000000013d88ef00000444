@@ -1,0 +1,59 @@
+-----------------------ROUTER-----------------------
+
+-----------------------ROUTER-----------------------
+
+-----------------------ROUTER-----------------------
+
+Connected to manager
+Connected to manager
+-----------------------ROUTER-----------------------
+Connected to manager
+
+Sent to manager: Hello manager!
+
+Received from manager: 
+	ID: 6
+	UDP Port: 40006
+	Num Neighbors: 2
+	My Neighbors: 
+	ID: 2 Cost: 70 UDP Port: 40002
+	ID: 4 Cost: 40 UDP Port: 40004
+
+
+
+
+Sent to manager: Hello manager!
+
+Sent to manager: Hello manager!
+
+Received from manager: 
+	ID: 7
+	UDP Port: 40007
+	Num Neighbors: 3
+	My Neighbors: 
+	ID: 4 Cost: 70 UDP Port: 40004
+	ID: 5 Cost: 40 UDP Port: 40005
+	ID: 9 Cost: 60 UDP Port: 40009
+Received from manager: 
+
+	ID: 8
+	UDP Port: 40008
+	Num Neighbors: 3
+	My Neighbors: 
+	ID: 1 Cost: 70 UDP Port: 40001
+	ID: 3 Cost: 70 UDP Port: 40003
+	ID: 9 Cost: 70 UDP Port: 40009
+
+Connected to manager
+
+Sent to manager: Hello manager!
+
+Received from manager: 
+	ID: 8
+	UDP Port: 40008
+	Num Neighbors: 3
+	My Neighbors: 
+	ID: 1 Cost: 70 UDP Port: 40001
+	ID: 3 Cost: 70 UDP Port: 40003
+	ID: 9 Cost: 70 UDP Port: 40009
+

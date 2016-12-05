@@ -1,0 +1,84 @@
+-----------------------ROUTER-----------------------
+
+Connected to manager
+
+Sent to manager: Hello manager!
+
+Received from manager: 
+	ID: 7
+	UDP Port: 40007
+	Num Neighbors: 3
+	My Neighbors: 
+	ID: 4 Cost: 70 UDP Port: 40004
+	ID: 5 Cost: 40 UDP Port: 40005
+	ID: 9 Cost: 60 UDP Port: 40009
+
+Received router info from router 0
+Send router info to router 5
+Send router info to router 9
+Received router info from router 0
+Received router info from router 0
+Received router info from router 1
+Send router info to router 4
+Send router info to router 5
+Received router info from router 1
+Received router info from router 2
+Send router info to router 5
+Send router info to router 9
+Received router info from router 2
+Received router info from router 2
+Received router info from router 3
+Send router info to router 4
+Send router info to router 9
+Received router info from router 3
+Received router info from router 4
+Send router info to router 5
+Send router info to router 9
+Received router info from router 4
+Received router info from router 4
+Received router info from router 5
+Send router info to router 4
+Send router info to router 9
+Received router info from router 5
+Received router info from router 6
+Send router info to router 5
+Send router info to router 9
+Received router info from router 6
+Received router info from router 6
+Send router info to router 4
+Send router info to router 5
+Send router info to router 9
+Received router info from router 7
+Received router info from router 8
+Send router info to router 4
+Send router info to router 5
+Received router info from router 8
+Received router info from router 8
+Received router info from router 9
+Send router info to router 5
+Send router info to router 9
+
+Running link state algorithm...
+
+Routing table:
+ID	COST	NEXT HOP
+0	100	9
+1	200	8
+2	140	0
+3	80	9
+4	70	7
+5	40	7
+6	110	4
+7	0	7
+8	130	9
+9	60	7
+
+Received message from neighbor: 	
+Sent instruction to router 9: 0
+Received message from neighbor: 	
+Sent instruction to router 9: 0
+Received message from neighbor: 5
+Sent instruction to router 7: 5
+Received instruction from manager: 8
+Sent instruction to router 9: 8
+Received instruction from manager: Quit

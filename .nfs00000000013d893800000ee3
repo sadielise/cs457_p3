@@ -1,0 +1,13 @@
+-----------------------ROUTER-----------------------
+
+Connected to manager
+
+Sent to manager: Hello manager!
+
+Received from manager: 
+	ID: 1
+	UDP Port: 40001
+	Num Neighbors: 1
+	My Neighbors: 
+	ID: 8 Cost: 70 UDP Port: 40008
+
