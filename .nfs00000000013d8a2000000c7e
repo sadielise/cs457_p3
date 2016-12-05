@@ -1,0 +1,18 @@
+-----------------------ROUTER-----------------------
+
+Connected to manager
+
+Sent to manager: Hello manager!
+
+Received from manager: 
+	ID: 5
+	UDP Port: 40005
+	Num Neighbors: 3
+	My Neighbors: 
+	ID: 3 Cost: 70 UDP Port: 40003
+	ID: 7 Cost: 40 UDP Port: 40007
+	ID: 9 Cost: 70 UDP Port: 40009
+
+Send router info to router 3
+Send router info to router 7
+Send router info to router 9

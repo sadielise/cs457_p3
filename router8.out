@@ -26,7 +26,7 @@ Send router info to router 3
 Received router info from router 2
 Received router info from router 3
 Send router info to router 1
-Send router info to router 9
+Send router info to router 3
 Received router info from router 3
 Received router info from router 4
 Send router info to router 1
@@ -38,11 +38,11 @@ Send router info to router 9
 Received router info from router 5
 Received router info from router 6
 Send router info to router 1
-Send router info to router 9
+Send router info to router 3
 Received router info from router 6
 Received router info from router 7
 Send router info to router 1
-Send router info to router 9
+Send router info to router 3
 Received router info from router 7
 Send router info to router 1
 Send router info to router 3
@@ -66,4 +66,8 @@ ID	COST	NEXT HOP
 8	0	8
 9	70	8
 
+Received message from neighbor: 	
+Sent instruction to router 9: 0
 Received instruction from manager: 9
+Sent instruction to router 8: 9
+Received instruction from manager: Quit

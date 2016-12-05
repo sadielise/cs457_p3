@@ -7,69 +7,37 @@ Sent to manager: Hello manager!
 Received from manager: 
 	ID: 5
 	UDP Port: 40005
-	Num Neighbors: 3
+	Num Neighbors: 1
 	My Neighbors: 
-	ID: 3 Cost: 70 UDP Port: 40003
-	ID: 7 Cost: 40 UDP Port: 40007
-	ID: 9 Cost: 70 UDP Port: 40009
+	ID: 2 Cost: 6 UDP Port: 40002
 
 Received router info from router 0
-Send router info to router 3
-Send router info to router 7
-Received router info from router 0
-Received router info from router 0
 Received router info from router 1
-Send router info to router 7
-Send router info to router 9
-Received router info from router 1
-Received router info from router 1
-Received router info from router 2
-Send router info to router 3
-Send router info to router 7
-Received router info from router 2
 Received router info from router 2
 Received router info from router 3
-Send router info to router 7
-Send router info to router 9
-Received router info from router 3
 Received router info from router 4
-Send router info to router 3
-Send router info to router 9
-Received router info from router 4
-Received router info from router 4
-Send router info to router 3
-Send router info to router 7
-Send router info to router 9
-Received router info from router 6
-Send router info to router 3
-Send router info to router 9
-Received router info from router 6
-Received router info from router 7
-Send router info to router 3
-Send router info to router 9
-Received router info from router 7
-Received router info from router 8
-Send router info to router 7
-Send router info to router 9
-Received router info from router 8
-Received router info from router 8
-Received router info from router 9
-Send router info to router 3
-Send router info to router 7
+Send router info to router 2
 
 Running link state algorithm...
 
 Routing table:
 ID	COST	NEXT HOP
-0	110	9
-1	210	8
-2	150	0
-3	70	5
-4	110	7
+0	9	2
+1	9	2
+2	6	2
+3	9	2
+4	7	2
 5	0	5
-6	150	4
-7	40	5
-8	140	3
-9	70	5
 
-Received instruction from manager: 6
+Time: Sun Dec  4 23:58:46 2016
+ Received packet from router: send packet to router 5
+Packet destination reached
+Time: Sun Dec  4 23:58:51 2016
+ Received from manager: send packet to router 0
+Time: Sun Dec  4 23:58:51 2016
+ Sent packet to router 2: send packet to router 0
+Time: Sun Dec  4 23:59:06 2016
+ Received from manager: Quit
+
+Exiting router...
+

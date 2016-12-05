@@ -14,7 +14,6 @@ Received from manager:
 
 Received router info from router 0
 Send router info to router 4
-Received router info from router 0
 Received router info from router 1
 Send router info to router 4
 Received router info from router 1
@@ -28,18 +27,19 @@ Received router info from router 4
 Send router info to router 2
 Received router info from router 4
 Received router info from router 5
-Send router info to router 2
+Send router info to router 4
 Received router info from router 5
 Send router info to router 2
+Send router info to router 2
+Received router info from router 6
 Send router info to router 4
 Received router info from router 7
 Send router info to router 2
-Received router info from router 7
 Received router info from router 8
 Send router info to router 4
 Received router info from router 8
 Received router info from router 9
-Send router info to router 4
+Send router info to router 2
 
 Running link state algorithm...
 
@@ -56,4 +56,8 @@ ID	COST	NEXT HOP
 8	210	9
 9	140	0
 
+Received message from neighbor: 	
+Sent instruction to router 4: 0
 Received instruction from manager: 7
+Sent instruction to router 4: 7
+Received instruction from manager: Quit

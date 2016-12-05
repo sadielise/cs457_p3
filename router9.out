@@ -36,10 +36,9 @@ Send router info to router 8
 Received router info from router 2
 Received router info from router 3
 Send router info to router 0
-Send router info to router 5
+Send router info to router 3
 Send router info to router 7
 Send router info to router 8
-Received router info from router 3
 Received router info from router 3
 Received router info from router 3
 Received router info from router 4
@@ -47,11 +46,10 @@ Send router info to router 3
 Send router info to router 5
 Send router info to router 7
 Send router info to router 8
-Received router info from router 4
 Received router info from router 4
 Received router info from router 5
 Send router info to router 0
-Send router info to router 3
+Send router info to router 5
 Send router info to router 7
 Send router info to router 8
 Received router info from router 5
@@ -63,15 +61,11 @@ Send router info to router 5
 Send router info to router 7
 Send router info to router 8
 Received router info from router 6
-Received router info from router 6
-Received router info from router 6
-Received router info from router 6
 Received router info from router 7
-Send router info to router 0
 Send router info to router 3
 Send router info to router 5
+Send router info to router 7
 Send router info to router 8
-Received router info from router 7
 Received router info from router 7
 Received router info from router 7
 Received router info from router 7
@@ -101,4 +95,28 @@ ID	COST	NEXT HOP
 8	70	9
 9	0	9
 
+Received message from neighbor: 
+Sent instruction to router 9: 0
+Received message from neighbor: 
+Sent instruction to router 9: 0
+Received message from neighbor: 	
+Sent instruction to router 9: 0
+Received message from neighbor: 	
+Sent instruction to router 9: 0
+Received message from neighbor: 	
+Sent instruction to router 9: 0
+Received message from neighbor: 	
+Sent instruction to router 9: 0
+Received message from neighbor: 	
+Sent instruction to router 9: 0
+Received message from neighbor: 	
+Sent instruction to router 9: 0
+Received message from neighbor: 	
+Sent instruction to router 9: 0
+Received message from neighbor: 	
+Sent instruction to router 9: 0
+Received message from neighbor: 8
+Sent instruction to router 9: 8
 Received instruction from manager: 0
+Sent instruction to router 9: 0
+Received instruction from manager: Quit

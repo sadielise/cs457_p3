@@ -1,40 +1,42 @@
 -----------------------ROUTER-----------------------
 
-Connected to manager
+Time 01:28:58:704	Connected to manager
 
-Sent to manager: Hello manager!
+Time 01:28:58:704	Sent to manager: Hello manager!
 
-Received from manager: 
-	ID: 1
-	UDP Port: 40001
-	Num Neighbors: 1
-	My Neighbors: 
-	ID: 8 Cost: 70 UDP Port: 40008
+Time 01:28:58:704	Received from manager: 
+			ID: 1
+			UDP Port: 40001
+			Num Neighbors: 2
+			My Neighbors: 
+			ID: 0 Cost: 1 UDP Port: 40000
+			ID: 2 Cost: 3 UDP Port: 40002
 
-Received router info from router 0
-Send router info to router 8
-Received router info from router 2
-Received router info from router 3
-Received router info from router 4
-Received router info from router 5
-Received router info from router 6
-Received router info from router 7
-Received router info from router 8
-Received router info from router 9
+Time 01:29:01:697	Received router info from router 0
+Time 01:29:01:698	Send router info to router 2
+Time 01:29:01:698	Received router info from router 0
+Time 01:29:01:704	Send router info to router 0
+Time 01:29:01:704	Send router info to router 2
+Time 01:29:01:710	Received router info from router 2
+Time 01:29:01:710	Send router info to router 0
+Time 01:29:01:710	Received router info from router 2
+Time 01:29:01:717	Received router info from router 3
+Time 01:29:01:717	Send router info to router 0
 
-Running link state algorithm...
+Time 01:29:01:717	Running link state algorithm...
 
-Routing table:
-ID	COST	NEXT HOP
-0	180	9
-1	0	1
-2	220	0
-3	140	8
-4	240	0
-5	210	3
-6	280	4
-7	200	9
-8	70	1
-9	140	8
+Time 01:29:01:717	Routing table:
+			ID	COST	NEXT HOP
+			0	1	0
+			1	0	1
+			2	3	2
+			3	5	2
 
-Received instruction from manager: 2
+Time 01:29:01:718	Received packet from router 0: send packet to router 3
+Time 01:29:01:718	Sent packet to router 2: send packet to router 3
+Time 01:29:06:719	Received packet from router 2: send packet to router 1
+Time 01:29:06:720	Packet destination reached
+Time 01:29:21:719	Received from manager: Quit
+
+Time 01:29:21:720	Exiting router...
+

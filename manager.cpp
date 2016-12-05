@@ -1,7 +1,7 @@
 #include "project3.h"
 
 int NUM_NODES = 0;
-int DEBUG = 1;
+int DEBUG = 0;
 int MAX_CONNECTION_LENGTH = 8;
 int MANAGER_SOCKET;
 vector<int> ROUTER_SOCKETS;
@@ -38,6 +38,31 @@ vector<string> split(const string &s, char delim) {
     return tokens;
 }
 
+/* Code for this method obtained from: http://stackoverflow.com/questions/16077299/how-to-print-current-time-with-milliseconds-using-c-c11 */
+string get_time(){
+	const ptime now = microsec_clock::local_time();
+	time_duration td = now.time_of_day();
+	const long hours = td.hours();
+	string hrs;
+	if(hours < 10){ hrs = "0"; }
+	hrs += to_string(hours);
+	const long minutes = td.minutes();
+	string mins;
+	if(minutes < 10){ mins = "0"; }
+	mins += to_string(minutes);
+	const long seconds = td.seconds();
+	string secs;
+	if(seconds < 10){ secs = "0"; }
+	secs += to_string(seconds);
+	const long milliseconds = td.total_milliseconds() - ((hours * 3600 + minutes * 60 + seconds) * 1000);
+	string ms;
+	if(milliseconds < 10){ ms = "00"; }
+	if(milliseconds < 100){ ms = "0"; }
+	ms += to_string(milliseconds);
+	string time = "Time " + hrs + ":" + mins + ":" + secs + ":" + ms + "\t";
+	return time;
+}
+
 void create_routers() {
 	for(int i = 0; i < NUM_NODES; i++) {
 		struct router_node new_router = {};
@@ -48,9 +73,15 @@ void create_routers() {
 }
 
 void print_topology_to_file(int num_nodes, vector<string>* topology){
-	MANAGER_FILE << "Number of nodes: " << num_nodes << endl;
+	MANAGER_FILE << get_time() << "Topology: " << endl;
+	MANAGER_FILE << "\t\t\tSOURCE\tDEST\tCOST" << endl;
 	for(unsigned int i = 0; i < (*topology).size(); i++){
-		MANAGER_FILE << (*topology).at(i) << endl;
+		vector<string> elements = split((*topology).at(i), ' ');
+		for(unsigned int j = 0; j < elements.size(); j++){
+			if(j == 0){ MANAGER_FILE << "\t\t\t"; }
+			MANAGER_FILE << elements.at(j) << "\t";
+		}
+		MANAGER_FILE << endl;
 	}
 	MANAGER_FILE << endl;
 }
@@ -107,7 +138,7 @@ void receive_router_packet(int accept_socket, int i){
 		cout << "Error: Could not receive from router." << endl;
 	}
 	if(DEBUG){ cout << "Received from router " << i << ": " << receive_packet.message << endl; }
-	MANAGER_FILE << "Received from router " << i << ": " << receive_packet.message << endl;
+	MANAGER_FILE << get_time() << "Received from router " << i << ": " << receive_packet.message << endl;
 }
 
 bool receive_ready_packet(int accept_socket){
@@ -134,7 +165,7 @@ void send_message_to_router(int accept_socket, int router_id){
 	struct router_node r = ROUTERS[router_id];
 	send(accept_socket, reinterpret_cast<char*>(&r), sizeof(r), 0);
 	if(DEBUG){ cout << "Sent topology to router " << router_id << endl; }
-	MANAGER_FILE << "Sent topology to router " << router_id << endl << endl;
+	MANAGER_FILE << get_time() << "Sent topology to router " << router_id << endl << endl;
 }
 
 int accept_router_connection(int manager_socket){
@@ -157,28 +188,51 @@ void close_router_connections(){
 void confirm_router_ready(int i){
 	if(receive_ready_packet(ROUTER_SOCKETS.at(i)) == true){
 		if(DEBUG){ cout << "Router " << i << " ready" << endl; }
-		MANAGER_FILE << "Received from router " << i << ": ready" << endl;
+		MANAGER_FILE << get_time() << "Received from router " << i << ": ready" << endl;
 	}
 }
 
 void send_instruction_to_router(int source_id, string destination_id){
 	int source_socket = ROUTER_SOCKETS.at(source_id);
 	struct packet instruction = {};
-	for(unsigned int i = 0; i < destination_id.size(); i++){
-		instruction.message[i] = destination_id.at(i);
+	string message = "send packet to router " + destination_id;
+	for(unsigned int i = 0; i < message.size(); i++){
+		instruction.message[i] = message.at(i);
 	}
 	send(source_socket, reinterpret_cast<char*>(&instruction), sizeof(instruction), 0);
+	if(DEBUG){ cout << "Instruction: " << source_id << " " << destination_id << endl; }
+	MANAGER_FILE << get_time() << "Sent message to router " << source_id << ": " << message << endl;
 }
+
+void send_quit_to_routers(){
+	MANAGER_FILE << endl;
+	string message = "Quit";
+	struct packet instruction = {};
+	for(unsigned int i = 0; i < message.size(); i++){
+		instruction.message[i] = message.at(i);
+	}
+	for(int i = 0; i < NUM_NODES; i++){
+		send(ROUTER_SOCKETS.at(i), reinterpret_cast<char*>(&instruction), sizeof(instruction), 0);
+		if(DEBUG){ cout << "Sent quit to router " << i << endl; }
+		MANAGER_FILE << get_time() << "Sent quit to router " << i << endl;
+	}
+
+	MANAGER_FILE << endl;
+}	
 
 void send_router_instructions(){
 
-	MANAGER_FILE << endl << "Sending instructions to routers..." << endl << endl;
+	MANAGER_FILE << endl << get_time() << "Sending instructions to routers..." << endl << endl;
 	bool end_of_instructions = false;
 	int instruction_number = 0;
 	while(end_of_instructions == false){
 		char connection[MAX_CONNECTION_LENGTH];
 		TOPOLOGY_FILE.getline(connection, MAX_CONNECTION_LENGTH);
-		if(connection[0] == '-'){ end_of_instructions = true; }
+		if(connection[0] == '-'){ 
+			end_of_instructions = true; 
+			this_thread::sleep_for(chrono::milliseconds(10000));
+			send_quit_to_routers();
+		}
 		else{
 			string line(connection);
 			trim(line);
@@ -187,8 +241,7 @@ void send_router_instructions(){
 			string destination_id = elements.at(1);
 			instruction_number = instruction_number + 1;
 			send_instruction_to_router(source_id, destination_id);
-			if(DEBUG){ cout << "Instruction " << instruction_number << ": " << source_id << " " << destination_id << endl; }
-			MANAGER_FILE << "Sent instruction to router " << source_id << ": " << destination_id << endl;
+			this_thread::sleep_for(chrono::milliseconds(5000));
 		}
 	}
 }
@@ -197,14 +250,14 @@ void connect_to_routers(int manager_socket){
 	pid_t pid;
 	for(int i = 0; i < NUM_NODES; i++){
 		pid = fork();
-		
 		if(pid == 0) { // child process
 			system("./router");
 			_exit(0);
 		} else if(pid > 0) { // parent_process
+			MANAGER_FILE << get_time() << "Starting router " << i << "..." << endl;
 			int accept_socket = accept_router_connection(manager_socket);
 			if(accept_socket == -1) return;
-			MANAGER_FILE << "Connected to router " << i << endl;
+			MANAGER_FILE << get_time() << "Connected to router " << i << endl;
 			ROUTER_SOCKETS.push_back(accept_socket);
 			receive_router_packet(accept_socket, i);
 			send_message_to_router(accept_socket, i);
@@ -247,7 +300,7 @@ int start_listening()
 		return -1;
 	}
 	if(DEBUG){ cout << "Manager is listening..." << endl; }
-	MANAGER_FILE << "Listening for routers..." << endl << endl;
+	MANAGER_FILE << get_time() << "Listening for routers..." << endl << endl;
 
 	return manager_socket;
 }
@@ -257,6 +310,8 @@ void sig_handler(int signal){
 }
 
 int main(int argc, char* argv[]) {
+
+	cout << "Manager starting..." << endl;
 
 	// handle signals
 	signal(SIGINT/SIGTERM/SIGKILL, sig_handler);
@@ -291,14 +346,16 @@ int main(int argc, char* argv[]) {
 		tempN--;
 	}
 
-	// close manager file
-	MANAGER_FILE.close();
-
 	// close router connections
 	close_router_connections();
 	
 	// close manager 
 	close(MANAGER_SOCKET);
+
+	MANAGER_FILE << get_time() << "Exiting manager..." << endl << endl;
+
+	// close manager file
+	MANAGER_FILE.close();
 	
   exit(0);
 }
