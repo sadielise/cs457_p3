@@ -271,6 +271,8 @@ void connect_to_routers(int manager_socket){
 		confirm_router_ready(i);
 	}
 	
+	cout << "Waiting for routers to finish..." << endl;
+	
 	send_router_instructions();
 }
 
@@ -357,5 +359,8 @@ int main(int argc, char* argv[]) {
 	// close manager file
 	MANAGER_FILE.close();
 	
-  exit(0);
+	cout << "Program exiting successfully!" << endl;
+	cout << "Manager and Router output logged in corresponding files." << endl;
+	
+	exit(0);
 }
