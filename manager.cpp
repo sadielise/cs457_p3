@@ -161,7 +161,6 @@ void send_message_to_router(int accept_socket, int router_id){
 	struct packet_header pack_head = {};
 	pack_head.num_routers = NUM_NODES;
 	send(accept_socket, reinterpret_cast<char*>(&pack_head), sizeof(pack_head), 0);
-	
 	struct router_node r = ROUTERS[router_id];
 	send(accept_socket, reinterpret_cast<char*>(&r), sizeof(r), 0);
 	if(DEBUG){ cout << "Sent topology to router " << router_id << endl; }
