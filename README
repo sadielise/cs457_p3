@@ -9,6 +9,8 @@ PROJECT DESCRIPTION:
 This project simulates routers in a network. These routers are "spawned" by the manager program and use the Link State Routing protocol to send/receive packets to/from each other. The manager instructs the routers to send a packet from one router to another. 
 
 HOW TO RUN:
+To compile the program, type and enter "make". 
+To clean up .o files and executables, type and enter "make clean".
 To run the program, use the following command:
 
 	./manager <input file>
