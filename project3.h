@@ -37,10 +37,10 @@ using namespace std;
 using namespace boost;
 using namespace boost::posix_time;
 
-#define PORT_NUMBER 20003
+#define PORT_NUMBER 55555
 #define MESSAGE_SIZE 140
 #define VERSION 457
-#define BASE_UDP_PORT 40000
+#define BASE_UDP_PORT 50000
 
 /* This struct is used to send the number of
 nodes to a router */
